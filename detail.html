@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Alat | Virtu DigiLab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="home-btn">🏠 Home</a>
+    <h1>Detail Alat Laboratorium</h1>
+  </header>
+  <main>
+    <div class="card">
+      <div id="data">Memuat detail alat...</div>
+      <div id="qrcode"></div>
+    </div>
+  </main>
+  <footer>© 2025 Virtu DigiLab</footer>
+
+  <script>
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const output = document.getElementById("data");
+
+    fetch(SHEET_URL)
+      .then(res => res.text())
+      .then(csv => {
+        const rows = csv.split("\n").map(r => r.split(","));
+        const headers = rows.shift();
+        const match = rows.find(r => r[1].trim() === id.trim());
+
+        if (match) {
+          let html = "<table>";
+          headers.forEach((h, i) => {
+            if (h.trim() && match[i]) {
+              if (h.includes("Link Dokumen Sertifikat")) {
+                html += `<tr><td><b>${h}</b></td><td><a href='${match[i]}' target='_blank'>Lihat Sertifikat</a></td></tr>`;
+              } else {
+                html += `<tr><td><b>${h}</b></td><td>${match[i]}</td></tr>`;
+              }
+            }
+          });
+          html += "</table>";
+          output.innerHTML = html;
+
+          new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href,
+            width: 120,
+            height: 120
+          });
+        } else {
+          output.innerHTML = `<p style='color:red'>Data tidak ditemukan untuk kode: ${id}</p>`;
+        }
+      })
+      .catch(err => {
+        output.innerHTML = `<p style='color:red'>Gagal mengambil data: ${err}</p>`;
+      });
+  </script>
+</body>
+</html>

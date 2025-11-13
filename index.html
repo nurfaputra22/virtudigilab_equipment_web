@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar Alat Laboratorium | Virtu DigiLab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="Virtu DigiLab Logo" class="logo" />
+    <h1>Daftar Alat Laboratorium</h1>
+  </header>
+
+  <main>
+    <div class="table-container">
+      <table id="assetTable">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Kode Material</th>
+            <th>Asset Description</th>
+            <th>Location</th>
+            <th>QR Code</th>
+          </tr>
+        </thead>
+        <tbody id="assetGrid">
+          <tr><td colspan="5" class="loading">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
