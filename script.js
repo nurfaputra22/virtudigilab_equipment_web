@@ -1,8 +1,10 @@
-// public CSV
+// PUBLIC CSV
 const sheetUrl =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
 
-// parse CSV line (handle quotes sederhana)
+// DOMAIN FULL HARUS DIISI SESUAI HOSTING KAMU
+const BASE_URL = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
+
 function parseCSVLine(line) {
   const result = [];
   let cur = "";
@@ -63,11 +65,10 @@ async function loadAssets() {
       const location    = (row[5] || "-").trim();
       const serial      = (row[6] || "-").trim();
 
-      const detailUrl = `detail.html?id=${encodeURIComponent(serial)}`;
+      // 🔥 URL DETAIL FULL – PENTING
+      const detailUrl = `${BASE_URL}detail.html?id=${encodeURIComponent(serial)}`;
 
-      // buat row tabel
       const tr = document.createElement("tr");
-
       tr.innerHTML = `
         <td>${no}</td>
         <td><a href="${detailUrl}">${serial}</a></td>
