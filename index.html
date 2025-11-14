@@ -4,11 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Daftar Alat Laboratorium | Virtu DigiLab</title>
+
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Tambahan jika style.css belum mengatur ukuran logo */
+    .logo {
+      height: 60px;
+      margin-right: 10px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+    }
+  </style>
+
 </head>
 <body>
+
   <header>
-    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png" alt="Virtu DigiLab Logo" class="logo" />
+    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png"
+         alt="Virtu DigiLab Logo" class="logo" />
     <h1>Daftar Alat Laboratorium</h1>
   </header>
 
@@ -24,17 +43,21 @@
             <th>QR Code</th>
           </tr>
         </thead>
+
         <tbody id="assetGrid">
-          <tr><td colspan="5" class="loading">Memuat data...</td></tr>
+          <tr>
+            <td colspan="5" class="loading">Memuat data...</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </main>
 
   <footer>
-    &copy; 2025 Virtu DigiLab — System Inventori Alat Laboratorium
+    &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
   </footer>
 
   <script src="script.js"></script>
+
 </body>
 </html>
