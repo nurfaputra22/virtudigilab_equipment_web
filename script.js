@@ -70,10 +70,10 @@ async function loadAssets() {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${no}</td>
-        <td><a href="${detailUrl}">${SerialNumber}</a></td>
+        <td><a href="${detailUrl}">${Serial}</a></td>
         <td>${assetDesc}</td>
         <td>${location}</td>
-        <td><a href="${detailUrl}"><img src="${qrUrl}" alt="QR ${kodeAsset}" class="qr" /></a></td>
+        <td><a href="${detailUrl}"><img src="${qrUrl}" alt="QR ${SerialNumber}" class="qr" /></a></td>
       `;
       grid.appendChild(tr);
     });
@@ -85,4 +85,5 @@ async function loadAssets() {
 }
 
 loadAssets();
+
 
