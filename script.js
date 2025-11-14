@@ -1,21 +1,24 @@
 // public CSV (sama seperti di detail.html)
-const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
+const sheetUrl =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
 
 // parse CSV line (handle quotes sederhana)
 function parseCSVLine(line) {
   const result = [];
   let cur = "";
   let inQuotes = false;
+
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
+
     if (ch === '"') {
-      if (inQuotes && line[i+1] === '"') {
+      if (inQuotes && line[i + 1] === '"') {
         cur += '"';
         i++;
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (ch === ',' && !inQuotes) {
+    } else if (ch === "," && !inQuotes) {
       result.push(cur);
       cur = "";
     } else {
@@ -34,8 +37,8 @@ async function loadAssets() {
 
     // Format: 0 = judul sheet, 1 = kosong, 2 = header, 3 = kategori, data mulai idx 4
     if (lines.length < 5) {
-      const grid = document.getElementById("assetGrid");
-      grid.innerHTML = `<tr><td colspan="5" class="loading">CSV tidak sesuai format yang diharapkan.</td></tr>`;
+      document.getElementById("assetGrid").innerHTML =
+        `<tr><td colspan="5" class="loading">CSV tidak sesuai format yang diharapkan.</td></tr>`;
       return;
     }
 
@@ -51,22 +54,22 @@ async function loadAssets() {
     grid.innerHTML = "";
 
     if (rows.length === 0) {
-      grid.innerHTML = `<tr><td colspan="5" class="loading">Tidak ada data.</td></tr>`;
+      grid.innerHTML =
+        `<tr><td colspan="5" class="loading">Tidak ada data.</td></tr>`;
       return;
     }
 
     rows.forEach((row, i) => {
       const no = i + 1;
-      // mapping: index 1 = Kode Material, index 2 = Asset, index 4 = Asset Description, index 5 = Location, index 6 = Serial Number
+
+      // mapping sesuai CSV
       const kodeMaterial = (row[1] || "-").trim();
-      const assetDesc = (row[4] || "-").trim();
-      const location = (row[5] || "-").trim();
-      const serial = (row[6] || "-").trim(); // <-- definisikan serial di sini
+      const assetName   = (row[2] || "-").trim();
+      const assetDesc   = (row[4] || "-").trim();
+      const location    = (row[5] || "-").trim();
+      const serial      = (row[6] || "-").trim(); // penting, digunakan sebagai ID
 
-      // jika serial kosong, bisa fallback ke kode asset (opsional)
-      // const serialKey = serial !== "-" && serial !== "" ? serial : (row[2] || "").trim();
-
-      // link ke detail menggunakan parameter id (sekarang id = serial)
+      // gunakan serial number sebagai ID
       const detailUrl = `detail.html?id=${encodeURIComponent(serial)}`;
       const qrUrl = `https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent(detailUrl)}`;
 
@@ -76,14 +79,16 @@ async function loadAssets() {
         <td><a href="${detailUrl}">${serial}</a></td>
         <td>${assetDesc}</td>
         <td>${location}</td>
-        <td><a href="${detailUrl}"><img src="${qrUrl}" alt="QR ${serial}" class="qr" /></a></td>
+        <td><a href="${detailUrl}">
+            <img src="${qrUrl}" alt="QR ${serial}" class="qr" />
+        </a></td>
       `;
       grid.appendChild(tr);
     });
 
   } catch (err) {
-    const grid = document.getElementById("assetGrid");
-    grid.innerHTML = `<tr><td colspan="5" class="loading">Gagal memuat data: ${err}</td></tr>`;
+    document.getElementById("assetGrid").innerHTML =
+      `<tr><td colspan="5" class="loading">Gagal memuat data: ${err}</td></tr>`;
   }
 }
 
