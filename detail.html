@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
   <style>
-    /* Tambahan khusus untuk QR Code agar tampil di tengah */
+    /* Buat QR tampil di tengah */
     .qr-center {
       width: 100%;
       display: flex;
@@ -17,6 +17,7 @@
     }
   </style>
 </head>
+
 <body>
   <header>
     <a href="index.html" class="home-btn">🏠 Home</a>
@@ -27,21 +28,18 @@
     <div class="card">
       <div id="data">Memuat detail alat...</div>
 
-      <!-- QR Code di tengah -->
       <div class="qr-center">
         <div id="qrcode"></div>
       </div>
-
     </div>
   </main>
 
   <footer>© 2025 Virtu DigiLab</footer>
 
 
-
   <script>
-    // URL publik CSV
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
+    const SHEET_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
@@ -91,10 +89,11 @@
           return;
         }
 
-        const match = rows.find(r => (r[2] || "").trim() === id.trim());
+        // 🔥 SEKARANG MENCARI SERIAL NUMBER (KOLUM 6 → r[6])
+        const match = rows.find(r => (r[6] || "").trim() === id.trim());
 
         if (!match) {
-          output.innerHTML = `<p style='color:red'>Data tidak ditemukan untuk: ${id}</p>`;
+          output.innerHTML = `<p style='color:red'>Data tidak ditemukan untuk Serial: ${id}</p>`;
           return;
         }
 
@@ -105,7 +104,8 @@
 
           if (h.toLowerCase().includes("link dokumen") || /sertifikat/i.test(h)) {
             if (value) {
-              html += `<tr><td><b>${h}</b></td><td><a href="${value}" target="_blank">Lihat Sertifikat</a></td></tr>`;
+              html += `<tr><td><b>${h}</b></td>
+                       <td><a href="${value}" target="_blank">Lihat Sertifikat</a></td></tr>`;
             } else {
               html += `<tr><td><b>${h}</b></td><td>-</td></tr>`;
             }
@@ -117,7 +117,7 @@
 
         output.innerHTML = html;
 
-        // Buat QR Code di tengah
+        // QR CODE
         const qrContainer = document.getElementById("qrcode");
         qrContainer.innerHTML = "";
         new QRCode(qrContainer, {
