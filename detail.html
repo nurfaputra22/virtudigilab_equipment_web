@@ -31,7 +31,7 @@
       .then(csv => {
         const rows = csv.split("\n").map(r => r.split(","));
         const headers = rows.shift();
-        const match = rows.find(r => r[1].trim() === id.trim());
+        const match = rows.find(r => r[2].trim() === id.trim());
 
         if (match) {
           let html = "<table>";
