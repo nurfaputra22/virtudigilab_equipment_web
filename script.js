@@ -57,23 +57,26 @@ async function loadAssets() {
 
     rows.forEach((row, i) => {
       const no = i + 1;
-      // sesuai mapping header di file CSV: index 1 = Kode Material, index 2 = Asset, index 4 = Asset Description, index 5 = Location
-      const kodeMaterial = (row[6] || "-").trim();
+      // mapping: index 1 = Kode Material, index 2 = Asset, index 4 = Asset Description, index 5 = Location, index 6 = Serial Number
+      const kodeMaterial = (row[1] || "-").trim();
       const assetDesc = (row[4] || "-").trim();
       const location = (row[5] || "-").trim();
-      const kodeAsset = (row[2] || "-").trim();
+      const serial = (row[6] || "-").trim(); // <-- definisikan serial di sini
 
-      // link ke detail menggunakan parameter id (kolom Asset)
-      const detailUrl = `detail.html?id=${encodeURIComponent(kodeAsset)}`;
+      // jika serial kosong, bisa fallback ke kode asset (opsional)
+      // const serialKey = serial !== "-" && serial !== "" ? serial : (row[2] || "").trim();
+
+      // link ke detail menggunakan parameter id (sekarang id = serial)
+      const detailUrl = `detail.html?id=${encodeURIComponent(serial)}`;
       const qrUrl = `https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent(detailUrl)}`;
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${no}</td>
-        <td><a href="${detailUrl}">${Serial}</a></td>
+        <td><a href="${detailUrl}">${serial}</a></td>
         <td>${assetDesc}</td>
         <td>${location}</td>
-        <td><a href="${detailUrl}"><img src="${qrUrl}" alt="QR ${SerialNumber}" class="qr" /></a></td>
+        <td><a href="${detailUrl}"><img src="${qrUrl}" alt="QR ${serial}" class="qr" /></a></td>
       `;
       grid.appendChild(tr);
     });
@@ -85,5 +88,3 @@ async function loadAssets() {
 }
 
 loadAssets();
-
-
