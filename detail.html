@@ -6,38 +6,55 @@
   <title>Detail Alat | Virtu DigiLab</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+  <style>
+    /* Tambahan khusus untuk QR Code agar tampil di tengah */
+    .qr-center {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <header>
     <a href="index.html" class="home-btn">🏠 Home</a>
     <h1>Detail Alat Laboratorium</h1>
   </header>
+
   <main>
     <div class="card">
       <div id="data">Memuat detail alat...</div>
-      <div id="qrcode"></div>
+
+      <!-- QR Code di tengah -->
+      <div class="qr-center">
+        <div id="qrcode"></div>
+      </div>
+
     </div>
   </main>
+
   <footer>© 2025 Virtu DigiLab</footer>
 
+
+
   <script>
-    // URL publik CSV (sama seperti di script.js)
+    // URL publik CSV
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
 
-    // ambil parameter id dari URL (index mengirim id=...)
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     const output = document.getElementById("data");
 
-    // helper: parse satu baris CSV (sederhana, handle quotes)
     function parseCSVLine(line) {
       const result = [];
       let cur = "";
       let inQuotes = false;
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
-        if (ch === '"' ) {
-          if (inQuotes && line[i+1] === '"') { // escaped quote
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
             cur += '"';
             i++;
           } else {
@@ -57,53 +74,38 @@
     fetch(SHEET_URL)
       .then(res => res.text())
       .then(csv => {
-        // split aman newline
         const lines = csv.split(/\r?\n/);
 
-        // format A: baris 0 = nama sheet, baris 1 kosong, baris 2 = header, baris 3 = kategori, data mulai baris 4
         if (lines.length < 4) {
-          output.innerHTML = `<p style='color:red'>CSV tidak sesuai format yang diharapkan.</p>`;
+          output.innerHTML = `<p style='color:red'>CSV tidak sesuai format.</p>`;
           return;
         }
 
-        // parse header dan data
-        const headerLine = lines[2];
-        const headers = parseCSVLine(headerLine).map(h => h.trim());
-        const rawDataLines = lines.slice(4); // mulai data dari baris 5 (index 4)
-        const rows = rawDataLines
+        const headers = parseCSVLine(lines[2]).map(h => h.trim());
+        const rows = lines.slice(4)
           .map(l => parseCSVLine(l))
-          .filter(r => r.length > 1 && r.some(cell => cell && cell.trim() !== ""));
+          .filter(r => r.some(cell => cell.trim() !== ""));
 
         if (!id) {
-          output.innerHTML = `<p style='color:red'>Parameter id tidak ditemukan di URL.</p>`;
+          output.innerHTML = `<p style='color:red'>ID tidak ditemukan pada URL.</p>`;
           return;
         }
 
-        // cari berdasarkan kolom Asset -> index 2 (sesuai format)
-        const match = rows.find(r => {
-          const val = (r[2] || "").trim();
-          return val === id.trim();
-        });
+        const match = rows.find(r => (r[2] || "").trim() === id.trim());
 
         if (!match) {
-          output.innerHTML = `<p style='color:red'>Data tidak ditemukan untuk kode: ${id}</p>`;
+          output.innerHTML = `<p style='color:red'>Data tidak ditemukan untuk: ${id}</p>`;
           return;
         }
 
-        // bangun tabel detail
         let html = "<table>";
         headers.forEach((h, i) => {
           const value = (match[i] || "").trim();
           if (!h) return;
+
           if (h.toLowerCase().includes("link dokumen") || /sertifikat/i.test(h)) {
-            // jika ada link file, tampilkan sebagai anchor bila bukan kosong
             if (value) {
-              let href = value;
-              // jika nilai adalah nama file (pdf) dan tidak berisi http, coba buat path relatif
-              if (!/^https?:\/\//i.test(href) && href.toLowerCase().includes(".pdf")) {
-                href = href; // biarkan apa adanya; jika perlu bisa tambahkan base URL
-              }
-              html += `<tr><td><b>${h}</b></td><td><a href="${href}" target="_blank" rel="noopener noreferrer">Lihat Sertifikat</a></td></tr>`;
+              html += `<tr><td><b>${h}</b></td><td><a href="${value}" target="_blank">Lihat Sertifikat</a></td></tr>`;
             } else {
               html += `<tr><td><b>${h}</b></td><td>-</td></tr>`;
             }
@@ -112,20 +114,22 @@
           }
         });
         html += "</table>";
+
         output.innerHTML = html;
 
-        // QR code (tampilkan URL detail lengkap)
+        // Buat QR Code di tengah
         const qrContainer = document.getElementById("qrcode");
-        qrContainer.innerHTML = ""; // reset
+        qrContainer.innerHTML = "";
         new QRCode(qrContainer, {
           text: window.location.href,
-          width: 140,
-          height: 140
+          width: 150,
+          height: 150
         });
       })
       .catch(err => {
-        output.innerHTML = `<p style='color:red'>Gagal mengambil data: ${err}</p>`;
+        output.innerHTML = `<p style='color:red'>Gagal memuat data: ${err}</p>`;
       });
   </script>
+
 </body>
 </html>
