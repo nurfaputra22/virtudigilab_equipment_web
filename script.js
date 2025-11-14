@@ -58,7 +58,7 @@ async function loadAssets() {
     rows.forEach((row, i) => {
       const no = i + 1;
       // sesuai mapping header di file CSV: index 1 = Kode Material, index 2 = Asset, index 4 = Asset Description, index 5 = Location
-      const kodeMaterial = (row[1] || "-").trim();
+      const kodeMaterial = (row[6] || "-").trim();
       const assetDesc = (row[4] || "-").trim();
       const location = (row[5] || "-").trim();
       const kodeAsset = (row[2] || "-").trim();
@@ -70,7 +70,7 @@ async function loadAssets() {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${no}</td>
-        <td><a href="${detailUrl}">${kodeMaterial}</a></td>
+        <td><a href="${detailUrl}">${SerialNumber}</a></td>
         <td>${assetDesc}</td>
         <td>${location}</td>
         <td><a href="${detailUrl}"><img src="${qrUrl}" alt="QR ${kodeAsset}" class="qr" /></a></td>
@@ -85,3 +85,4 @@ async function loadAssets() {
 }
 
 loadAssets();
+
