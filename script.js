@@ -19,7 +19,7 @@ async function loadAssets() {
     const kodeAsset = row[2] || "-";
 
     // QR code link (pakai API chart Google biar cepat)
-    const detailUrl = `detail.html?kode=${encodeURIComponent(kodeAsset)}`;
+    const detailUrl = `detail.html?id=${encodeURIComponent(kodeAsset)}`;
     const qrUrl = `https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=${encodeURIComponent(detailUrl)}`;
 
     const tr = document.createElement("tr");
@@ -35,4 +35,5 @@ async function loadAssets() {
 }
 
 loadAssets();
+
 
