@@ -61,9 +61,9 @@ async function loadAssets() {
       const no = i + 1;
       const kodeMaterial = (row[1] || "-").trim();
       const assetName   = (row[2] || "-").trim();
-      const assetDesc   = (row[4] || "-").trim();
-      const location    = (row[5] || "-").trim();
-      const serial      = (row[6] || "-").trim();
+      const assetDesc   = (row[3] || "-").trim();
+      const location    = (row[4] || "-").trim();
+      const serial      = (row[5] || "-").trim();
 
       // 🔥 URL DETAIL FULL – PENTING
       const detailUrl = `${BASE_URL}detail.html?id=${encodeURIComponent(serial)}`;
@@ -109,3 +109,4 @@ async function loadAssets() {
 }
 
 loadAssets();
+
