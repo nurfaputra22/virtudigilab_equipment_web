@@ -1,101 +1,184 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Log Maintenance & Calibration</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Alat | Virtu DigiLab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #eaeaea; }
+    .section-title { margin-top: 40px; font-size: 20px; font-weight: bold; }
+    .qr-center { display: flex; justify-content: center; margin-top: 20px; }
+    .link-icon { font-size: 18px; text-decoration: none; }
+  </style>
 </head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-6xl mx-auto">
-    <h1 class="text-2xl font-bold mb-4">Maintenance & Calibration Log</h1>
 
-    <!-- Maintenance Table -->
-    <h2 class="text-xl font-semibold mt-8 mb-2">Log Maintenance</h2>
-    <div class="overflow-x-auto bg-white shadow rounded-lg p-4">
-      <table class="min-w-full border text-sm" id="maintenanceTable">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="border px-3 py-2">Date</th>
-            <th class="border px-3 py-2">Asset</th>
-            <th class="border px-3 py-2">Serial</th>
-            <th class="border px-3 py-2">Place</th>
-            <th class="border px-3 py-2">Note</th>
-            <th class="border px-3 py-2">Document</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+<body>
+<header>
+  <a href="index.html" class="home-btn">🏠 Home</a>
+  <h1>Detail Alat Laboratorium</h1>
+</header>
 
-    <!-- Calibration Table -->
-    <h2 class="text-xl font-semibold mt-10 mb-2">Log Calibration</h2>
-    <div class="overflow-x-auto bg-white shadow rounded-lg p-4">
-      <table class="min-w-full border text-sm" id="calibrationTable">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="border px-3 py-2">Date</th>
-            <th class="border px-3 py-2">Asset</th>
-            <th class="border px-3 py-2">Serial</th>
-            <th class="border px-3 py-2">Place</th>
-            <th class="border px-3 py-2">Note</th>
-            <th class="border px-3 py-2">Document</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+<main>
+  <div class="card">
+    <div id="main-data">Memuat detail alat...</div>
+
+    <h2 class="section-title">Log Maintenance</h2>
+    <div id="log-maintenance">Memuat data...</div>
+
+    <h2 class="section-title">Log Calibration</h2>
+    <div id="log-calibration">Memuat data...</div>
+
+    <div class="qr-center">
+      <div id="qrcode"></div>
     </div>
   </div>
+</main>
 
-  <script>
-    // ================================
-    //   GANTI URL CSV DI SINI
-    // ================================
-    const MAINTENANCE_CSV = "PASTE_URL_MAINTENANCE_CSV";
-    const CALIBRATION_CSV = "PASTE_URL_CALIBRATION_CSV";
+<footer>© 2025 Virtu DigiLab</footer>
 
-    async function loadCSV(url) {
-      const response = await fetch(url);
-      const text = await response.text();
-      const rows = text.split(/\r?\n/).map(r => r.split(","));
 
-      const headers = rows[0].map(h => h.trim());
-      return rows.slice(1).map(row => {
-        let obj = {};
-        headers.forEach((h, i) => (obj[h] = row[i]));
-        return obj;
-      });
+
+<script>
+/* ===========================
+   LINK CSV
+   =========================== */
+const CSV_NCR = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
+
+const CSV_LOG_M = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
+
+const CSV_LOG_C = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
+
+
+
+/* ===========================
+   CSV PARSER
+   =========================== */
+function parseCSVLine(line) {
+  const result = [];
+  let cur = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"'; i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur); cur = "";
+    } else {
+      cur += ch;
     }
+  }
+  result.push(cur);
+  return result;
+}
 
-    function renderTable(data, tableId, type) {
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      tbody.innerHTML = "";
 
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class='border px-3 py-2'>${row[`${type} Date`] || "-"}</td>
-          <td class='border px-3 py-2'>${row["Asset Description"] || "-"}</td>
-          <td class='border px-3 py-2'>${row["Serial Number"] || "-"}</td>
-          <td class='border px-3 py-2'>${row["Place Type"] || "-"}</td>
-          <td class='border px-3 py-2'>${row[`Note ${type}`] || "-"}</td>
-          <td class='border px-3 py-2'>
-            ${row["Document"] ? `<a href='${row["Document"]}' target='_blank' class='text-blue-600 underline'>Lihat Dokumen</a>` : "-"}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
 
-    async function init() {
-      const maintenance = await loadCSV(MAINTENANCE_CSV);
-      const calibration = await loadCSV(CALIBRATION_CSV);
+/* ===========================
+   FETCH CSV GENERIC
+   =========================== */
+async function loadCSV(url) {
+  const res = await fetch(url);
+  const text = await res.text();
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  const headers = parseCSVLine(lines[0]);
+  const rows = lines.slice(1).map(parseCSVLine);
+  return { headers, rows };
+}
 
-      renderTable(maintenance, "maintenanceTable", "Maintenance");
-      renderTable(calibration, "calibrationTable", "Calibration");
-    }
 
-    init();
-  </script>
+
+/* ===========================
+   GET SERIAL FROM URL
+   =========================== */
+const params = new URLSearchParams(location.search);
+const SERIAL = params.get("id")?.trim() || "";
+
+
+/* ===========================
+   RENDER TABLE
+   =========================== */
+function renderTable(headers, rows) {
+  let html = "<table><tr>";
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += "</tr>";
+
+  rows.forEach(r => {
+    html += "<tr>";
+    r.forEach(c => {
+      if (c.startsWith("http")) {
+        html += `<td><a class="link-icon" href="${c}" target="_blank">🔗</a></td>`;
+      } else {
+        html += `<td>${c || "-"}</td>`;
+      }
+    });
+    html += "</tr>";
+  });
+
+  html += "</table>";
+  return html;
+}
+
+
+
+/* ===========================
+   MAIN EXECUTION
+   =========================== */
+async function init() {
+  /* === NCR DATA === */
+  const NCR = await loadCSV(CSV_NCR);
+  const serialIndex = NCR.headers.findIndex(h => /serial/i.test(h));
+
+  const match = NCR.rows.find(r => (r[serialIndex] || "").trim() === SERIAL);
+
+  if (!match) {
+    document.getElementById("main-data").innerHTML =
+      `<p style='color:red'>Data tidak ditemukan untuk Serial: ${SERIAL}</p>`;
+  } else {
+    let table = "<table>";
+    NCR.headers.forEach((h, i) => {
+      let v = match[i] || "";
+      if (v.startsWith("http")) {
+        v = `<a class="link-icon" href="${v}" target="_blank">🔗 Lihat</a>`;
+      }
+      table += `<tr><td><b>${h}</b></td><td>${v}</td></tr>`;
+    });
+    table += "</table>";
+    document.getElementById("main-data").innerHTML = table;
+  }
+
+  /* === LOG MAINTENANCE === */
+  const LOG_M = await loadCSV(CSV_LOG_M);
+  const filteredM = LOG_M.rows.filter(r => r[serialIndex] === SERIAL);
+  document.getElementById("log-maintenance").innerHTML =
+    filteredM.length ? renderTable(LOG_M.headers, filteredM) : "<p>Tidak ada data.</p>";
+
+  /* === LOG CALIBRATION === */
+  const LOG_C = await loadCSV(CSV_LOG_C);
+  const filteredC = LOG_C.rows.filter(r => r[serialIndex] === SERIAL);
+  document.getElementById("log-calibration").innerHTML =
+    filteredC.length ? renderTable(LOG_C.headers, filteredC) : "<p>Tidak ada data.</p>";
+
+  /* === QR CODE === */
+  new QRCode(document.getElementById("qrcode"), {
+    text: window.location.href,
+    width: 150,
+    height: 150
+  });
+}
+
+init();
+</script>
+
 </body>
 </html>
