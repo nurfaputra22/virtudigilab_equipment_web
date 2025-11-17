@@ -2,7 +2,7 @@
 const sheetUrl =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
 
-// DOMAIN FULL HARUS DIISI SESUAI HOSTING KAMU
+// DOMAIN HOSTING KAMU
 const BASE_URL = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
 function parseCSVLine(line) {
@@ -63,9 +63,11 @@ async function loadAssets() {
       const assetName   = (row[2] || "-").trim();
       const assetDesc   = (row[3] || "-").trim();
       const location    = (row[4] || "-").trim();
+
+      // SERIAL ADA PADA INDEX KE-5
       const serial      = (row[5] || "-").trim();
 
-      // 🔥 URL DETAIL FULL – PENTING
+      // URL DETAIL FULL
       const detailUrl = `${BASE_URL}detail.html?id=${encodeURIComponent(serial)}`;
 
       const tr = document.createElement("tr");
@@ -79,24 +81,15 @@ async function loadAssets() {
 
       grid.appendChild(tr);
 
-      // QR dengan logo
       const qr = new QRCodeStyling({
         width: 120,
         height: 120,
         type: "png",
         data: detailUrl,
         image: "https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png",
-        dotsOptions: {
-          color: "#000",
-          type: "rounded"
-        },
-        backgroundOptions: {
-          color: "#fff"
-        },
-        imageOptions: {
-          crossOrigin: "anonymous",
-          margin: 5,
-        }
+        dotsOptions: { color: "#000", type: "rounded" },
+        backgroundOptions: { color: "#fff" },
+        imageOptions: { crossOrigin: "anonymous", margin: 5 }
       });
 
       qr.append(document.getElementById(`qr-${i}`));
@@ -109,4 +102,3 @@ async function loadAssets() {
 }
 
 loadAssets();
-
