@@ -6,179 +6,101 @@
   <title>Detail Alat | Virtu DigiLab</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
   <style>
-    body { font-family: Arial, sans-serif; background: #f7f7f7; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { margin-top: 30px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #eaeaea; }
-    .section-title { margin-top: 40px; font-size: 20px; font-weight: bold; }
-    .qr-center { display: flex; justify-content: center; margin-top: 20px; }
-    .link-icon { font-size: 18px; text-decoration: none; }
+    th { background: #f2f2f2; }
+    .notfound { color: red; font-weight: bold; }
   </style>
 </head>
-
 <body>
-<header>
-  <a href="index.html" class="home-btn">🏠 Home</a>
-  <h1>Detail Alat Laboratorium</h1>
-</header>
+  <h1>Detail Alat</h1>
+  <div id="data-container">Memuat data...</div>
 
-<main>
-  <div class="card">
-    <div id="main-data">Memuat detail alat...</div>
+  <h2>Log Maintenance</h2>
+  <div id="log-maintenance">Memuat...</div>
 
-    <h2 class="section-title">Log Maintenance</h2>
-    <div id="log-maintenance">Memuat data...</div>
+  <h2>Log Calibration</h2>
+  <div id="log-calibration">Memuat...</div>
 
-    <h2 class="section-title">Log Calibration</h2>
-    <div id="log-calibration">Memuat data...</div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const serial = urlParams.get('serial');
 
-    <div class="qr-center">
-      <div id="qrcode"></div>
-    </div>
-  </div>
-</main>
+    const NRC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+    const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
+    const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-<footer>© 2025 Virtu DigiLab</footer>
+    function csvToJson(csv) {
+      const lines = csv.split("\n");
+      const headers = lines[0].split(",");
+      const result = [];
 
-
-
-<script>
-/* ===========================
-   LINK CSV
-   =========================== */
-const CSV_NCR = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv";
-
-const CSV_LOG_M = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
-
-const CSV_LOG_C = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
-
-
-
-/* ===========================
-   CSV PARSER
-   =========================== */
-function parseCSVLine(line) {
-  const result = [];
-  let cur = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        cur += '"'; i++;
-      } else {
-        inQuotes = !inQuotes;
+      for (let i = 1; i < lines.length; i++) {
+        const obj = {};
+        const row = lines[i].split(",");
+        if (row.length < headers.length) continue;
+        headers.forEach((h, j) => obj[h.trim()] = row[j].trim());
+        result.push(obj);
       }
-    } else if (ch === ',' && !inQuotes) {
-      result.push(cur); cur = "";
-    } else {
-      cur += ch;
+      return result;
     }
-  }
-  result.push(cur);
-  return result;
-}
 
+    async function loadCSV(url) {
+      const res = await fetch(url);
+      return csvToJson(await res.text());
+    }
 
+    async function loadData() {
+      const nrc = await loadCSV(NRC_URL);
+      const logM = await loadCSV(LOG_M_URL);
+      const logC = await loadCSV(LOG_C_URL);
 
-/* ===========================
-   FETCH CSV GENERIC
-   =========================== */
-async function loadCSV(url) {
-  const res = await fetch(url);
-  const text = await res.text();
-  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
-  const headers = parseCSVLine(lines[0]);
-  const rows = lines.slice(1).map(parseCSVLine);
-  return { headers, rows };
-}
+      const data = nrc.find(r => r.Serial === serial);
 
-
-
-/* ===========================
-   GET SERIAL FROM URL
-   =========================== */
-const params = new URLSearchParams(location.search);
-const SERIAL = params.get("id")?.trim() || "";
-
-
-/* ===========================
-   RENDER TABLE
-   =========================== */
-function renderTable(headers, rows) {
-  let html = "<table><tr>";
-  headers.forEach(h => html += `<th>${h}</th>`);
-  html += "</tr>";
-
-  rows.forEach(r => {
-    html += "<tr>";
-    r.forEach(c => {
-      if (c.startsWith("http")) {
-        html += `<td><a class="link-icon" href="${c}" target="_blank">🔗</a></td>`;
+      if (!data) {
+        document.getElementById('data-container').innerHTML = `<p class='notfound'>Data tidak ditemukan untuk Serial: ${serial}</p>`;
       } else {
-        html += `<td>${c || "-"}</td>`;
+        let html = `<table>`;
+        Object.keys(data).forEach(k => {
+          html += `<tr><th>${k}</th><td>${data[k]}</td></tr>`;
+        });
+        html += `</table>`;
+        document.getElementById('data-container').innerHTML = html;
       }
-    });
-    html += "</tr>";
-  });
 
-  html += "</table>";
-  return html;
-}
-
-
-
-/* ===========================
-   MAIN EXECUTION
-   =========================== */
-async function init() {
-  /* === NCR DATA === */
-  const NCR = await loadCSV(CSV_NCR);
-  const serialIndex = NCR.headers.findIndex(h => /serial/i.test(h));
-
-  const match = NCR.rows.find(r => (r[serialIndex] || "").trim() === SERIAL);
-
-  if (!match) {
-    document.getElementById("main-data").innerHTML =
-      `<p style='color:red'>Data tidak ditemukan untuk Serial: ${SERIAL}</p>`;
-  } else {
-    let table = "<table>";
-    NCR.headers.forEach((h, i) => {
-      let v = match[i] || "";
-      if (v.startsWith("http")) {
-        v = `<a class="link-icon" href="${v}" target="_blank">🔗 Lihat</a>`;
+      // Maintenance
+      const filteredM = logM.filter(r => r.Serial === serial);
+      if (filteredM.length === 0) {
+        document.getElementById('log-maintenance').innerHTML = "Tidak ada data.";
+      } else {
+        let html = `<table>`;
+        Object.keys(filteredM[0]).forEach(k => html += `<th>${k}</th>`);
+        filteredM.forEach(r => {
+          html += `<tr>` + Object.values(r).map(v => `<td>${v}</td>`).join('') + `</tr>`;
+        });
+        html += `</table>`;
+        document.getElementById('log-maintenance').innerHTML = html;
       }
-      table += `<tr><td><b>${h}</b></td><td>${v}</td></tr>`;
-    });
-    table += "</table>";
-    document.getElementById("main-data").innerHTML = table;
-  }
 
-  /* === LOG MAINTENANCE === */
-  const LOG_M = await loadCSV(CSV_LOG_M);
-  const filteredM = LOG_M.rows.filter(r => r[serialIndex] === SERIAL);
-  document.getElementById("log-maintenance").innerHTML =
-    filteredM.length ? renderTable(LOG_M.headers, filteredM) : "<p>Tidak ada data.</p>";
+      // Calibration
+      const filteredC = logC.filter(r => r.Serial === serial);
+      if (filteredC.length === 0) {
+        document.getElementById('log-calibration').innerHTML = "Tidak ada data.";
+      } else {
+        let html = `<table>`;
+        Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
+        filteredC.forEach(r => {
+          html += `<tr>` + Object.values(r).map(v => `<td>${v}</td>`).join('') + `</tr>`;
+        });
+        html += `</table>`;
+        document.getElementById('log-calibration').innerHTML = html;
+      }
+    }
 
-  /* === LOG CALIBRATION === */
-  const LOG_C = await loadCSV(CSV_LOG_C);
-  const filteredC = LOG_C.rows.filter(r => r[serialIndex] === SERIAL);
-  document.getElementById("log-calibration").innerHTML =
-    filteredC.length ? renderTable(LOG_C.headers, filteredC) : "<p>Tidak ada data.</p>";
-
-  /* === QR CODE === */
-  new QRCode(document.getElementById("qrcode"), {
-    text: window.location.href,
-    width: 150,
-    height: 150
-  });
-}
-
-init();
-</script>
-
+    loadData();
+  </script>
 </body>
 </html>
