@@ -4,122 +4,149 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Alat | Virtu DigiLab</title>
+
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    h2 { margin-top: 30px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f2f2f2; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+    th { background: #f4f4f4; }
+    h2 { margin-top: 30px; }
     .notfound { color: red; font-weight: bold; }
   </style>
 </head>
-
 <body>
-  <h1>Detail Alat</h1>
-  <div id="data-container">Memuat data...</div>
 
-  <h2>Log Maintenance</h2>
-  <div id="log-maintenance">Memuat...</div>
+<h1>Detail Alat</h1>
+<div id="data-container">Memuat data...</div>
 
-  <h2>Log Calibration</h2>
-  <div id="log-calibration">Memuat...</div>
+<h2>Log Maintenance</h2>
+<div id="log-maintenance">Memuat...</div>
 
-  <script>
-    // 🔥 Fix paling penting → gunakan parameter id
-    const urlParams = new URLSearchParams(window.location.search);
-    const serial = urlParams.get('id');
+<h2>Log Calibration</h2>
+<div id="log-calibration">Memuat...</div>
 
-    const NRC_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
-    const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
-    const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
+<script>
+const urlParams = new URLSearchParams(location.search);
+const serial = urlParams.get("id");  // ← memakai "id" karena index.html pakai id
 
-    function csvToJson(csv) {
-      const lines = csv.split("\n");
-      const headers = lines[0].split(",").map(h => h.trim());
-      const result = [];
+// CSV sources
+const NRC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
+const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(",");
-        if (row.length < headers.length) continue;
+// CSV parser
+function csvToJson(csv) {
+    const lines = csv.trim().split("\n").map(l => l.replace(/^\s+|\s+$/g, ""));
+    const headers = lines[0].split(",").map(h => h.trim());
+    const rows = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map(c => c.replace(/^"|"$/g, "").trim());
+        if (cols.length < headers.length) continue;
 
         const obj = {};
-        headers.forEach((h, j) => obj[h] = (row[j] || "").trim());
-        result.push(obj);
-      }
-      return result;
+        headers.forEach((h, idx) => obj[h] = cols[idx] || "");
+        rows.push(obj);
+    }
+    return rows;
+}
+
+async function loadCSV(url) {
+    const res = await fetch(url);
+    const txt = await res.text();
+    return csvToJson(txt);
+}
+
+async function loadData() {
+    if (!serial) {
+        document.getElementById("data-container").innerHTML =
+            `<p class='notfound'>Serial tidak ditemukan di URL.</p>`;
+        return;
     }
 
-    async function loadCSV(url) {
-      const res = await fetch(url);
-      return csvToJson(await res.text());
-    }
+    const nrc = await loadCSV(NRC_URL);
+    const logM = await loadCSV(LOG_M_URL);
+    const logC = await loadCSV(LOG_C_URL);
 
-    async function loadData() {
-      const nrc  = await loadCSV(NRC_URL);
-      const logM = await loadCSV(LOG_M_URL);
-      const logC = await loadCSV(LOG_C_URL);
+    const item = nrc.find(r => (r["Serial Number"] || "").trim() === serial.trim());
 
-      // 🔎 Cari data NRC berdasarkan Serial Number
-      const data = nrc.find(r => (r.Serial || "").trim() === serial);
+    // --- DETAIL ---
+    if (!item) {
+        document.getElementById("data-container").innerHTML =
+            `<p class='notfound'>Data tidak ditemukan untuk Serial: ${serial}</p>`;
+    } else {
+        let html = `<table>`;
+        Object.keys(item).forEach(key => {
+            let val = item[key] || "-";
 
-      // Jika tidak ditemukan
-      if (!data) {
-        document.getElementById('data-container').innerHTML =
-          `<p class='notfound'>Data tidak ditemukan untuk Serial: ${serial}</p>`;
-      } else {
-        let html = "<table>";
-        Object.keys(data).forEach(key => {
-          html += `<tr><th>${key}</th><td>${data[key]}</td></tr>`;
+            if (val.startsWith("http")) {
+                val = `<a href="${val}" target="_blank">🔗 Lihat Dokumen</a>`;
+            }
+
+            html += `<tr><th>${key}</th><td>${val}</td></tr>`;
         });
-        html += "</table>";
-        document.getElementById('data-container').innerHTML = html;
-      }
+        html += `</table>`;
+        document.getElementById("data-container").innerHTML = html;
+    }
 
-      // 🔧 Log Maintenance
-      const filteredM = logM.filter(r => (r.Serial || "").trim() === serial);
+    // --- MAINTENANCE ---
+    const m = logM.filter(r => (r["Serial Number"] || "").trim() === serial.trim());
 
-      if (filteredM.length === 0) {
+    if (m.length === 0) {
         document.getElementById("log-maintenance").innerHTML = "Tidak ada data.";
-      } else {
-        let html = "<table><tr>";
-        Object.keys(filteredM[0]).forEach(k => html += `<th>${k}</th>`);
-        html += "</tr>";
+    } else {
+        let html = `<table><tr>`;
+        Object.keys(m[0]).forEach(k => html += `<th>${k}</th>`);
+        html += `</tr>`;
 
-        filteredM.forEach(r => {
-          html += "<tr>";
-          Object.values(r).forEach(v => html += `<td>${v}</td>`);
-          html += "</tr>";
+        m.forEach(r => {
+            html += "<tr>";
+            Object.keys(r).forEach(k => {
+                let val = r[k] || "-";
+                if (val.startsWith("http")) {
+                    val = `<a href="${val}" target="_blank">🔗 Dokumen</a>`;
+                }
+                html += `<td>${val}</td>`;
+            });
+            html += "</tr>";
         });
 
-        html += "</table>";
+        html += `</table>`;
         document.getElementById("log-maintenance").innerHTML = html;
-      }
-
-      // 🔧 Log Calibration
-      const filteredC = logC.filter(r => (r.Serial || "").trim() === serial);
-
-      if (filteredC.length === 0) {
-        document.getElementById("log-calibration").innerHTML = "Tidak ada data.";
-      } else {
-        let html = "<table><tr>";
-        Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
-        html += "</tr>";
-
-        filteredC.forEach(r => {
-          html += "<tr>";
-          Object.values(r).forEach(v => html += `<td>${v}</td>`);
-          html += "</tr>";
-        });
-
-        html += "</table>";
-        document.getElementById("log-calibration").innerHTML = html;
-      }
     }
 
-    loadData();
-  </script>
+    // --- CALIBRATION ---
+    const c = logC.filter(r => (r["Serial Number"] || "").trim() === serial.trim());
+
+    if (c.length === 0) {
+        document.getElementById("log-calibration").innerHTML = "Tidak ada data.";
+    } else {
+        let html = `<table><tr>`;
+        Object.keys(c[0]).forEach(k => html += `<th>${k}</th>`);
+        html += `</tr>`;
+
+        c.forEach(r => {
+            html += "<tr>";
+            Object.keys(r).forEach(k => {
+                let val = r[k] || "-";
+                if (val.startsWith("http")) {
+                    val = `<a href="${val}" target="_blank">🔗 Dokumen</a>`;
+                }
+                html += `<td>${val}</td>`;
+            });
+            html += "</tr>";
+        });
+
+        html += `</table>`;
+        document.getElementById("log-calibration").innerHTML = html;
+    }
+}
+
+loadData();
+</script>
+
 </body>
 </html>
