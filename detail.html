@@ -6,6 +6,7 @@
   <title>Detail Alat | Virtu DigiLab</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     h2 { margin-top: 30px; }
@@ -15,6 +16,7 @@
     .notfound { color: red; font-weight: bold; }
   </style>
 </head>
+
 <body>
   <h1>Detail Alat</h1>
   <div id="data-container">Memuat data...</div>
@@ -26,23 +28,25 @@
   <div id="log-calibration">Memuat...</div>
 
   <script>
+    // 🔥 Fix paling penting → gunakan parameter id
     const urlParams = new URLSearchParams(window.location.search);
-    const serial = urlParams.get('serial');
+    const serial = urlParams.get('id');
 
-    const NRC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+    const NRC_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
     const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
     const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
     function csvToJson(csv) {
       const lines = csv.split("\n");
-      const headers = lines[0].split(",");
+      const headers = lines[0].split(",").map(h => h.trim());
       const result = [];
 
       for (let i = 1; i < lines.length; i++) {
-        const obj = {};
         const row = lines[i].split(",");
         if (row.length < headers.length) continue;
-        headers.forEach((h, j) => obj[h.trim()] = row[j].trim());
+
+        const obj = {};
+        headers.forEach((h, j) => obj[h] = (row[j] || "").trim());
         result.push(obj);
       }
       return result;
@@ -54,49 +58,64 @@
     }
 
     async function loadData() {
-      const nrc = await loadCSV(NRC_URL);
+      const nrc  = await loadCSV(NRC_URL);
       const logM = await loadCSV(LOG_M_URL);
       const logC = await loadCSV(LOG_C_URL);
 
-      const data = nrc.find(r => r.Serial === serial);
+      // 🔎 Cari data NRC berdasarkan Serial Number
+      const data = nrc.find(r => (r.Serial || "").trim() === serial);
 
+      // Jika tidak ditemukan
       if (!data) {
-        document.getElementById('data-container').innerHTML = `<p class='notfound'>Data tidak ditemukan untuk Serial: ${serial}</p>`;
+        document.getElementById('data-container').innerHTML =
+          `<p class='notfound'>Data tidak ditemukan untuk Serial: ${serial}</p>`;
       } else {
-        let html = `<table>`;
-        Object.keys(data).forEach(k => {
-          html += `<tr><th>${k}</th><td>${data[k]}</td></tr>`;
+        let html = "<table>";
+        Object.keys(data).forEach(key => {
+          html += `<tr><th>${key}</th><td>${data[key]}</td></tr>`;
         });
-        html += `</table>`;
+        html += "</table>";
         document.getElementById('data-container').innerHTML = html;
       }
 
-      // Maintenance
-      const filteredM = logM.filter(r => r.Serial === serial);
+      // 🔧 Log Maintenance
+      const filteredM = logM.filter(r => (r.Serial || "").trim() === serial);
+
       if (filteredM.length === 0) {
-        document.getElementById('log-maintenance').innerHTML = "Tidak ada data.";
+        document.getElementById("log-maintenance").innerHTML = "Tidak ada data.";
       } else {
-        let html = `<table>`;
+        let html = "<table><tr>";
         Object.keys(filteredM[0]).forEach(k => html += `<th>${k}</th>`);
+        html += "</tr>";
+
         filteredM.forEach(r => {
-          html += `<tr>` + Object.values(r).map(v => `<td>${v}</td>`).join('') + `</tr>`;
+          html += "<tr>";
+          Object.values(r).forEach(v => html += `<td>${v}</td>`);
+          html += "</tr>";
         });
-        html += `</table>`;
-        document.getElementById('log-maintenance').innerHTML = html;
+
+        html += "</table>";
+        document.getElementById("log-maintenance").innerHTML = html;
       }
 
-      // Calibration
-      const filteredC = logC.filter(r => r.Serial === serial);
+      // 🔧 Log Calibration
+      const filteredC = logC.filter(r => (r.Serial || "").trim() === serial);
+
       if (filteredC.length === 0) {
-        document.getElementById('log-calibration').innerHTML = "Tidak ada data.";
+        document.getElementById("log-calibration").innerHTML = "Tidak ada data.";
       } else {
-        let html = `<table>`;
+        let html = "<table><tr>";
         Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
+        html += "</tr>";
+
         filteredC.forEach(r => {
-          html += `<tr>` + Object.values(r).map(v => `<td>${v}</td>`).join('') + `</tr>`;
+          html += "<tr>";
+          Object.values(r).forEach(v => html += `<td>${v}</td>`);
+          html += "</tr>";
         });
-        html += `</table>`;
-        document.getElementById('log-calibration').innerHTML = html;
+
+        html += "</table>";
+        document.getElementById("log-calibration").innerHTML = html;
       }
     }
 
