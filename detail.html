@@ -28,11 +28,14 @@
     const urlParams = new URLSearchParams(window.location.search);
     const serial = urlParams.get('serial');
 
-    const NRC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
-    const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
-    const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
+    const NRC_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+    const LOG_M_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
+    const LOG_C_URL =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-    // CSV parser kuat (mengatasi koma & kutipan)
+    // CSV parser kuat
     function csvToJson(csvText) {
       const rows = [];
       let current = "";
@@ -40,9 +43,8 @@
       let insideQuote = false;
 
       for (let char of csvText) {
-        if (char === '"') {
-          insideQuote = !insideQuote;
-        } else if (char === "," && !insideQuote) {
+        if (char === '"') insideQuote = !insideQuote;
+        else if (char === "," && !insideQuote) {
           row.push(current.trim());
           current = "";
         } else if (char === "\n" && !insideQuote) {
@@ -50,9 +52,7 @@
           rows.push(row);
           row = [];
           current = "";
-        } else {
-          current += char;
-        }
+        } else current += char;
       }
 
       if (current) row.push(current.trim());
@@ -79,11 +79,7 @@
     }
 
     function findSerialColumn(obj) {
-      const keys = Object.keys(obj);
-      const match = keys.find(k =>
-        k.toLowerCase().includes("serial")
-      );
-      return match || null;
+      return Object.keys(obj).find(k => k.toLowerCase().includes("serial")) || null;
     }
 
     async function loadData() {
@@ -91,17 +87,17 @@
       const logM = await loadCSV(LOG_M_URL);
       const logC = await loadCSV(LOG_C_URL);
 
-      // otomatis deteksi nama kolom SERIAL di masing-masing sheet
       const serialColNRC = findSerialColumn(nrc[0]);
       const serialColM   = findSerialColumn(logM[0]);
       const serialColC   = findSerialColumn(logC[0]);
 
-      console.log("Serial column NRC:", serialColNRC);
-      console.log("Serial column Maintenance:", serialColM);
-      console.log("Serial column Calibration:", serialColC);
+      // === FILTER: hanya data yang memiliki serial !== "" ===
+      const cleanNRC = nrc.filter(r => r[serialColNRC] && r[serialColNRC].trim() !== "");
+      const cleanM   = logM.filter(r => r[serialColM] && r[serialColM].trim() !== "");
+      const cleanC   = logC.filter(r => r[serialColC] && r[serialColC].trim() !== "");
 
-      // ====== NRC MAIN DATA ======
-      const data = nrc.find(r => r[serialColNRC] === serial);
+      // ====== DETAIL NRC ======
+      const data = cleanNRC.find(r => r[serialColNRC] === serial);
 
       if (!data) {
         document.getElementById("data-container").innerHTML =
@@ -115,8 +111,8 @@
         document.getElementById("data-container").innerHTML = html;
       }
 
-      // ====== LOG MAINTENANCE ======
-      const filteredM = logM.filter(r => r[serialColM] === serial);
+      // ====== MAINTENANCE ======
+      const filteredM = cleanM.filter(r => r[serialColM] === serial);
 
       if (filteredM.length === 0) {
         document.getElementById("log-maintenance").innerHTML = "Tidak ada data.";
@@ -133,8 +129,8 @@
         document.getElementById("log-maintenance").innerHTML = html;
       }
 
-      // ====== LOG CALIBRATION ======
-      const filteredC = logC.filter(r => r[serialColC] === serial);
+      // ====== CALIBRATION ======
+      const filteredC = cleanC.filter(r => r[serialColC] === serial);
 
       if (filteredC.length === 0) {
         document.getElementById("log-calibration").innerHTML = "Tidak ada data.";
@@ -144,7 +140,7 @@
         html += "</tr>";
 
         filteredC.forEach(r => {
-          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>";
+          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>`;
         });
 
         html += "</table>";
