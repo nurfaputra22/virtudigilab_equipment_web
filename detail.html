@@ -38,7 +38,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const serial = urlParams.get('serial');
 
-    /* ========================== GOOGLE SHEETS ========================== */
     const NRC_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
 
@@ -48,7 +47,8 @@
     const LOG_C_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-    /* ========================== CSV PARSER ========================== */
+
+    /* ======================= CSV PARSER ======================= */
     function csvToJson(csvText) {
       const rows = [];
       let current = "", row = [], insideQuote = false;
@@ -85,7 +85,8 @@
       return Object.keys(obj).find(k => k.toLowerCase().includes("serial")) || null;
     }
 
-    /* ========================== LOAD DATA ========================== */
+
+    /* ======================= LOAD DATA ======================= */
     async function loadData() {
       const nrc  = await loadCSV(NRC_URL);
       const logM = await loadCSV(LOG_M_URL);
@@ -99,7 +100,8 @@
       const cleanM   = logM.filter(r => r[serialColM]);
       const cleanC   = logC.filter(r => r[serialColC]);
 
-      /* ========================== DETAIL ALAT ========================== */
+
+      /* ======================= DETAIL ALAT ======================= */
       const item = cleanNRC.find(r => r[serialColNRC] === serial);
       const container = document.getElementById("data-container");
 
@@ -114,7 +116,6 @@
       Object.keys(item).forEach(key => {
         html += `<tr><th>${key}</th><td>${item[key]}</td></tr>`;
 
-        /* ---- QR CODE DITEMPATKAN TEPAT SETELAH Place Type ---- */
         if (!qrInserted && key.toLowerCase().includes("place type")) {
           html += `
             <tr>
@@ -129,20 +130,22 @@
       html += "</table>";
       container.innerHTML = html;
 
-      /* ---- GENERATE QR CODE ---- */
+
+      /* ======================= QR CODE ======================= */
       const qrCell = document.getElementById("qr-code-cell");
       if (qrCell) {
         const qr = new QRCodeStyling({
           width: 160,
           height: 160,
-          data: window.location.href, 
+          data: window.location.href,
           dotsOptions: { color: "#000", type: "rounded" },
-          backgroundOptions: { color: "#ffffff" }
+          backgroundOptions: { color: "#fff" }
         });
         qr.append(qrCell);
       }
 
-      /* ========================== LOG MAINTENANCE ========================== */
+
+      /* ======================= LOG MAINTENANCE ======================= */
       const Mdata = cleanM.filter(r => r[serialColM] === serial);
       const logMContainer = document.getElementById("log-maintenance");
 
@@ -150,7 +153,10 @@
         logMContainer.innerHTML = "Tidak ada data.";
       } else {
         let htmlM = "<table><tr>";
-        Object.keys(Mdata[0]).forEach(k => htmlM += `<th>${k}</th>`);
+        Object.keys(Mdata[0]).forEach(k => {
+          if (k.toLowerCase().includes("document")) htmlM += `<th>Lampiran File</th>`;
+          else htmlM += `<th>${k}</th>`;
+        });
         htmlM += "</tr>";
 
         Mdata.forEach(row => {
@@ -169,7 +175,8 @@
         logMContainer.innerHTML = htmlM;
       }
 
-      /* ========================== LOG CALIBRATION ========================== */
+
+      /* ======================= LOG CALIBRATION ======================= */
       const Cdata = cleanC.filter(r => r[serialColC] === serial);
       const logCContainer = document.getElementById("log-calibration");
 
@@ -177,7 +184,10 @@
         logCContainer.innerHTML = "Tidak ada data.";
       } else {
         let htmlC = "<table><tr>";
-        Object.keys(Cdata[0]).forEach(k => htmlC += `<th>${k}</th>`);
+        Object.keys(Cdata[0]).forEach(k => {
+          if (k.toLowerCase().includes("document")) htmlC += `<th>Lampiran File</th>`;
+          else htmlC += `<th>${k}</th>`;
+        });
         htmlC += "</tr>";
 
         Cdata.forEach(row => {
@@ -195,6 +205,7 @@
         htmlC += "</table>";
         logCContainer.innerHTML = htmlC;
       }
+
     }
 
     loadData();
