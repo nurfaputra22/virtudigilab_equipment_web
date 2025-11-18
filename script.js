@@ -75,7 +75,6 @@ async function loadAssets() {
       return;
     }
 
-    // deteksi kolom serial & description
     const serialCol = findSerialColumn(data[0]);
     const descCol =
       Object.keys(data[0]).find((k) =>
@@ -86,15 +85,12 @@ async function loadAssets() {
         k.toLowerCase().includes("location")
       ) || Object.keys(data[0])[2];
 
-    tbody.innerHTML = ""; // reset tabel
+    tbody.innerHTML = "";
 
     data.forEach((item, index) => {
       const serial = item[serialCol] || "";
 
-      // CEGAH ERROR SERIAL NULL
       if (!serial || serial.trim() === "") return;
-
-      const qrLink = `detail.html?serial=${encodeURIComponent(serial)}`;
 
       const row = `
         <tr>
@@ -103,7 +99,7 @@ async function loadAssets() {
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
           <td>
-            <a href="${qrLink}" target="_blank">Lihat</a>
+            <a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">Lihat</a>
           </td>
         </tr>
       `;
