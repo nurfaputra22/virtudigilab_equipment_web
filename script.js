@@ -1,12 +1,12 @@
-// =========================
-//   CONFIG
-// =========================
+// =====================================================
+//  CONFIG
+// =====================================================
 const NRC_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
 
-// =========================
-//   PARSER CSV KUAT
-// =========================
+// =====================================================
+//  CSV PARSER KUAT
+// =====================================================
 function csvToJson(csvText) {
   const rows = [];
   let current = "";
@@ -52,18 +52,18 @@ async function loadCSV(url) {
   return csvToJson(text);
 }
 
-// =========================
-//  Temukan nama kolom Serial
-// =========================
+// =====================================================
+//  Temukan kolom Serial Number
+// =====================================================
 function findSerialColumn(obj) {
   const keys = Object.keys(obj);
   const match = keys.find((k) => k.toLowerCase().includes("serial"));
   return match || null;
 }
 
-// =========================
-//   LOAD LIST ASSET
-// =========================
+// =====================================================
+//  LOAD LIST ASSET (index.html)
+// =====================================================
 async function loadAssets() {
   const tbody = document.getElementById("assetGrid");
 
@@ -89,8 +89,7 @@ async function loadAssets() {
 
     data.forEach((item, index) => {
       const serial = item[serialCol] || "";
-
-      if (!serial || serial.trim() === "") return;
+      if (!serial.trim()) return;
 
       const row = `
         <tr>
@@ -112,3 +111,101 @@ async function loadAssets() {
 }
 
 loadAssets();
+
+// =====================================================
+//  DETAIL PAGE LOADER (detail.html)
+// =====================================================
+async function loadDetailPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const serialParam = urlParams.get("serial");
+
+  if (!serialParam) return;
+
+  const data = await loadCSV(NRC_URL);
+  const serialCol = findSerialColumn(data[0]);
+
+  const asset = data.find(
+    (item) => (item[serialCol] || "").trim() === serialParam.trim()
+  );
+
+  if (!asset) {
+    document.getElementById("detailContainer").innerHTML =
+      "<p>Data tidak ditemukan.</p>";
+    return;
+  }
+
+  // ================================
+  // Isi Detail Alat
+  // ================================
+  document.getElementById("d_serial").textContent = asset[serialCol] || "-";
+  document.getElementById("d_desc").textContent =
+    asset["Asset Description"] || "-";
+  document.getElementById("d_brand").textContent = asset["Brand"] || "-";
+  document.getElementById("d_model").textContent = asset["Model"] || "-";
+  document.getElementById("d_location").textContent =
+    asset["Place Type"] || "-";
+
+  // ================================
+  // QR CODE Generator
+  // ================================
+  new QRCode(document.getElementById("qrcode"), {
+    text: serialParam,
+    width: 150,
+    height: 150,
+  });
+
+  // ================================
+  // Log Maintenance
+  // ================================
+  const maintenanceBody = document.getElementById("maintenanceBody");
+  maintenanceBody.innerHTML = "";
+
+  const maintenanceData = data.filter(
+    (row) =>
+      (row[serialCol] || "").trim() === serialParam.trim() &&
+      (row["Maintenance Date"] || "").trim() !== ""
+  );
+
+  maintenanceData.forEach((row) => {
+    maintenanceBody.innerHTML += `
+      <tr>
+        <td>${row["Maintenance Date"] || ""}</td>
+        <td>${row["Asset Description"] || ""}</td>
+        <td>${row[serialCol] || ""}</td>
+        <td>${row["Place Type"] || ""}</td>
+        <td>${row["Note Maintenance"] || ""}</td>
+        <td>${row["Lampiran File"] || ""}</td>
+      </tr>
+    `;
+  });
+
+  // ================================
+  // Log Calibration
+  // ================================
+  const calibrationBody = document.getElementById("calibrationBody");
+  calibrationBody.innerHTML = "";
+
+  const calibrationData = data.filter(
+    (row) =>
+      (row[serialCol] || "").trim() === serialParam.trim() &&
+      (row["Calibration Date"] || "").trim() !== ""
+  );
+
+  calibrationData.forEach((row) => {
+    calibrationBody.innerHTML += `
+      <tr>
+        <td>${row["Calibration Date"] || ""}</td>
+        <td>${row["Asset Description"] || ""}</td>
+        <td>${row[serialCol] || ""}</td>
+        <td>${row["Place Type"] || ""}</td>
+        <td>${row["Note Calibration"] || ""}</td>
+        <td>${row["Lampiran File"] || ""}</td>
+      </tr>
+    `;
+  });
+}
+
+// auto-run when in detail.html
+if (window.location.pathname.includes("detail.html")) {
+  loadDetailPage();
+}
