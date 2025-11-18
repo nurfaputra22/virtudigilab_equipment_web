@@ -7,14 +7,16 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 20px; }
     h2 { margin-top: 30px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #f2f2f2; }
     .notfound { color: red; font-weight: bold; }
-    .qr-cell { text-align: center; padding: 10px; }
+    .qr-cell { text-align: center; padding: 15px; }
   </style>
 </head>
+
 <body>
 
   <h1>Detail Alat</h1>
@@ -27,7 +29,7 @@
   <h2>Log Calibration</h2>
   <div id="log-calibration">Memuat...</div>
 
-  <!-- Library QR Code Styling -->
+  <!-- QR Code Styling Library -->
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
 
   <script>
@@ -41,9 +43,11 @@
     const LOG_C_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
+    /* CSV → JSON converter */
     function csvToJson(csvText) {
       const rows = [];
       let current = "", row = [], insideQuote = false;
+
       for (let char of csvText) {
         if (char === '"') insideQuote = !insideQuote;
         else if (char === "," && !insideQuote) { row.push(current.trim()); current = ""; }
@@ -65,8 +69,8 @@
 
     async function loadCSV(url) {
       const res = await fetch(url);
-      const text = await res.text();
-      return csvToJson(text);
+      const txt = await res.text();
+      return csvToJson(txt);
     }
 
     function findSerialColumn(obj) {
@@ -75,12 +79,13 @@
 
     function renderDocumentCell(url) {
       if (!url || url.trim() === "") return "-";
-      if (!url.includes("drive.google.com")) return url;
-      return `<a href="${url}" target="_blank">Lampiran File</a>`;
+      if (url.includes("drive.google.com"))
+        return `<a href="${url}" target="_blank">Lampiran File</a>`;
+      return url;
     }
 
     async function loadData() {
-      const nrc = await loadCSV(NRC_URL);
+      const nrc  = await loadCSV(NRC_URL);
       const logM = await loadCSV(LOG_M_URL);
       const logC = await loadCSV(LOG_C_URL);
 
@@ -92,7 +97,7 @@
       const cleanM   = logM.filter(r => r[serialColM]   && r[serialColM].trim() !== "");
       const cleanC   = logC.filter(r => r[serialColC]   && r[serialColC].trim() !== "");
 
-      // ===== DETAIL ALAT =====
+      /* ========================== DETAIL ALAT ========================== */
       const data = cleanNRC.find(r => r[serialColNRC] === serial);
       const container = document.getElementById("data-container");
 
@@ -100,71 +105,94 @@
         container.innerHTML = `<p class="notfound">Data tidak ditemukan untuk Serial: ${serial}</p>`;
       } else {
         let html = "<table>";
-        Object.keys(data).forEach(k => {
-          html += `<tr><th>${k}</th><td>${data[k]}</td></tr>`;
-        });
 
-        // Tambahkan baris QR Code di bawah Place Type
-        const placeTypeKey = Object.keys(data).find(k => k.toLowerCase().includes("place type"));
-        if (placeTypeKey) {
-          html += `<tr><th>QR Code</th><td class="qr-cell" id="qr-code-cell"></td></tr>`;
-        }
+        const keys = Object.keys(data);
+        let qrInserted = false;
+
+        keys.forEach(k => {
+          html += `<tr><th>${k}</th><td>${data[k]}</td></tr>`;
+
+          /* Insert QR Code AFTER Place Type */
+          if (!qrInserted && k.toLowerCase().includes("place type")) {
+            html += `
+              <tr>
+                <th>QR Code</th>
+                <td class="qr-cell" id="qr-code-cell"></td>
+              </tr>
+            `;
+            qrInserted = true;
+          }
+        });
 
         html += "</table>";
         container.innerHTML = html;
 
-        // Generate QR Code
+        /* Generate QR Code */
         const qrCell = document.getElementById("qr-code-cell");
         if (qrCell) {
           const qr = new QRCodeStyling({
-            width: 150,
-            height: 150,
-            data: window.location.href,
+            width: 160,
+            height: 160,
+            data: serial,
             dotsOptions: { color: "#000", type: "rounded" },
-            backgroundOptions: { color: "#fff" }
+            backgroundOptions: { color: "#ffffff" }
           });
           qr.append(qrCell);
         }
       }
 
-      // ===== LOG MAINTENANCE =====
+      /* ========================== LOG MAINTENANCE ========================== */
       const filteredM = cleanM.filter(r => r[serialColM] === serial);
       const logMContainer = document.getElementById("log-maintenance");
+
       if (filteredM.length === 0) logMContainer.innerHTML = "Tidak ada data.";
       else {
         let html = "<table><tr>";
         Object.keys(filteredM[0]).forEach(k => html += `<th>${k}</th>`);
         html += "</tr>";
+
         filteredM.forEach(r => {
           html += "<tr>";
           Object.keys(r).forEach(k => {
             let val = r[k];
+
+            /* Hapus kolom Dokumen Sertifikat */
+            if (k.toLowerCase().includes("sertifikat")) val = "-";
+
             if (k.toLowerCase().includes("document")) val = renderDocumentCell(val);
             html += `<td>${val}</td>`;
           });
           html += "</tr>";
         });
+
         html += "</table>";
         logMContainer.innerHTML = html;
       }
 
-      // ===== LOG CALIBRATION =====
+      /* ========================== LOG CALIBRATION ========================== */
       const filteredC = cleanC.filter(r => r[serialColC] === serial);
       const logCContainer = document.getElementById("log-calibration");
+
       if (filteredC.length === 0) logCContainer.innerHTML = "Tidak ada data.";
       else {
         let html = "<table><tr>";
         Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
         html += "</tr>";
+
         filteredC.forEach(r => {
           html += "<tr>";
           Object.keys(r).forEach(k => {
             let val = r[k];
+
+            /* Hapus kolom Dokumen Sertifikat */
+            if (k.toLowerCase().includes("sertifikat")) val = "-";
+
             if (k.toLowerCase().includes("document")) val = renderDocumentCell(val);
             html += `<td>${val}</td>`;
           });
           html += "</tr>";
         });
+
         html += "</table>";
         logCContainer.innerHTML = html;
       }
@@ -172,5 +200,6 @@
 
     loadData();
   </script>
+
 </body>
 </html>
