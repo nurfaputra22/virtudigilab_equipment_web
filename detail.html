@@ -91,7 +91,7 @@
       const serialColM   = findSerialColumn(logM[0]);
       const serialColC   = findSerialColumn(logC[0]);
 
-      // === FILTER: hanya data yang memiliki serial !== "" ===
+      // FILTER: hanya row yang punya serial
       const cleanNRC = nrc.filter(r => r[serialColNRC] && r[serialColNRC].trim() !== "");
       const cleanM   = logM.filter(r => r[serialColM] && r[serialColM].trim() !== "");
       const cleanC   = logC.filter(r => r[serialColC] && r[serialColC].trim() !== "");
@@ -139,8 +139,9 @@
         Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
         html += "</tr>";
 
+        // ✅ FIX ERROR DI SINI — sekarang sudah benar
         filteredC.forEach(r => {
-          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>`;
+          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>";
         });
 
         html += "</table>";
