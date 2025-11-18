@@ -174,7 +174,13 @@ async function loadDetailPage() {
         <td>${row[serialCol] || ""}</td>
         <td>${row["Place Type"] || ""}</td>
         <td>${row["Note Maintenance"] || ""}</td>
-        <td>${row["Lampiran File"] || ""}</td>
+        <td>
+        ${
+          row["Lampiran File"]
+            ? `<a href="${row["Lampiran File"]}" target="_blank">Lampiran File</a>`
+            : "-"
+        }
+        </td>
       </tr>
     `;
   });
@@ -199,7 +205,13 @@ async function loadDetailPage() {
         <td>${row[serialCol] || ""}</td>
         <td>${row["Place Type"] || ""}</td>
         <td>${row["Note Calibration"] || ""}</td>
-        <td>${row["Lampiran File"] || ""}</td>
+        <td>
+        ${
+          row["Lampiran File"]
+            ? `<a href="${row["Lampiran File"]}" target="_blank">Lampiran File</a>`
+            : "-"
+        }
+        </td>
       </tr>
     `;
   });
@@ -209,3 +221,4 @@ async function loadDetailPage() {
 if (window.location.pathname.includes("detail.html")) {
   loadDetailPage();
 }
+
