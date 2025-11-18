@@ -176,7 +176,7 @@ async function loadDetailPage() {
         <td>${row["Note Maintenance"] || ""}</td>
         <td>
         ${
-          row["Lampiran File"]
+          row["Dokumen"]
             ? `<a href="${row["Lampiran File"]}" target="_blank">Lampiran File</a>`
             : "-"
         }
@@ -207,7 +207,7 @@ async function loadDetailPage() {
         <td>${row["Note Calibration"] || ""}</td>
         <td>
         ${
-          row["Lampiran File"]
+          row["Dokumen"]
             ? `<a href="${row["Lampiran File"]}" target="_blank">Lampiran File</a>`
             : "-"
         }
@@ -221,4 +221,5 @@ async function loadDetailPage() {
 if (window.location.pathname.includes("detail.html")) {
   loadDetailPage();
 }
+
 
