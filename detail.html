@@ -4,149 +4,155 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Alat | Virtu DigiLab</title>
-
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-    th { background: #f4f4f4; }
     h2 { margin-top: 30px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
     .notfound { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
+  <h1>Detail Alat</h1>
+  <div id="data-container">Memuat data...</div>
 
-<h1>Detail Alat</h1>
-<div id="data-container">Memuat data...</div>
+  <h2>Log Maintenance</h2>
+  <div id="log-maintenance">Memuat...</div>
 
-<h2>Log Maintenance</h2>
-<div id="log-maintenance">Memuat...</div>
+  <h2>Log Calibration</h2>
+  <div id="log-calibration">Memuat...</div>
 
-<h2>Log Calibration</h2>
-<div id="log-calibration">Memuat...</div>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const serial = urlParams.get('serial');
 
-<script>
-const urlParams = new URLSearchParams(location.search);
-const serial = urlParams.get("id");  // ← memakai "id" karena index.html pakai id
+    const NRC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+    const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
+    const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-// CSV sources
-const NRC_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
-const LOG_M_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
-const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
+    // CSV parser kuat (mengatasi koma & kutipan)
+    function csvToJson(csvText) {
+      const rows = [];
+      let current = "";
+      let row = [];
+      let insideQuote = false;
 
-// CSV parser
-function csvToJson(csv) {
-    const lines = csv.trim().split("\n").map(l => l.replace(/^\s+|\s+$/g, ""));
-    const headers = lines[0].split(",").map(h => h.trim());
-    const rows = [];
+      for (let char of csvText) {
+        if (char === '"') {
+          insideQuote = !insideQuote;
+        } else if (char === "," && !insideQuote) {
+          row.push(current.trim());
+          current = "";
+        } else if (char === "\n" && !insideQuote) {
+          row.push(current.trim());
+          rows.push(row);
+          row = [];
+          current = "";
+        } else {
+          current += char;
+        }
+      }
 
-    for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(",").map(c => c.replace(/^"|"$/g, "").trim());
-        if (cols.length < headers.length) continue;
+      if (current) row.push(current.trim());
+      if (row.length) rows.push(row);
 
+      const headers = rows[0];
+      const json = [];
+
+      for (let i = 1; i < rows.length; i++) {
         const obj = {};
-        headers.forEach((h, idx) => obj[h] = cols[idx] || "");
-        rows.push(obj);
-    }
-    return rows;
-}
+        headers.forEach((h, j) => {
+          obj[h.trim()] = rows[i][j] ? rows[i][j] : "";
+        });
+        json.push(obj);
+      }
 
-async function loadCSV(url) {
-    const res = await fetch(url);
-    const txt = await res.text();
-    return csvToJson(txt);
-}
-
-async function loadData() {
-    if (!serial) {
-        document.getElementById("data-container").innerHTML =
-            `<p class='notfound'>Serial tidak ditemukan di URL.</p>`;
-        return;
+      return json;
     }
 
-    const nrc = await loadCSV(NRC_URL);
-    const logM = await loadCSV(LOG_M_URL);
-    const logC = await loadCSV(LOG_C_URL);
+    async function loadCSV(url) {
+      const res = await fetch(url);
+      const text = await res.text();
+      return csvToJson(text);
+    }
 
-    const item = nrc.find(r => (r["Serial Number"] || "").trim() === serial.trim());
+    function findSerialColumn(obj) {
+      const keys = Object.keys(obj);
+      const match = keys.find(k =>
+        k.toLowerCase().includes("serial")
+      );
+      return match || null;
+    }
 
-    // --- DETAIL ---
-    if (!item) {
+    async function loadData() {
+      const nrc = await loadCSV(NRC_URL);
+      const logM = await loadCSV(LOG_M_URL);
+      const logC = await loadCSV(LOG_C_URL);
+
+      // otomatis deteksi nama kolom SERIAL di masing-masing sheet
+      const serialColNRC = findSerialColumn(nrc[0]);
+      const serialColM   = findSerialColumn(logM[0]);
+      const serialColC   = findSerialColumn(logC[0]);
+
+      console.log("Serial column NRC:", serialColNRC);
+      console.log("Serial column Maintenance:", serialColM);
+      console.log("Serial column Calibration:", serialColC);
+
+      // ====== NRC MAIN DATA ======
+      const data = nrc.find(r => r[serialColNRC] === serial);
+
+      if (!data) {
         document.getElementById("data-container").innerHTML =
-            `<p class='notfound'>Data tidak ditemukan untuk Serial: ${serial}</p>`;
-    } else {
+          `<p class="notfound">Data tidak ditemukan untuk Serial: ${serial}</p>`;
+      } else {
         let html = `<table>`;
-        Object.keys(item).forEach(key => {
-            let val = item[key] || "-";
-
-            if (val.startsWith("http")) {
-                val = `<a href="${val}" target="_blank">🔗 Lihat Dokumen</a>`;
-            }
-
-            html += `<tr><th>${key}</th><td>${val}</td></tr>`;
+        Object.keys(data).forEach(k => {
+          html += `<tr><th>${k}</th><td>${data[k]}</td></tr>`;
         });
         html += `</table>`;
         document.getElementById("data-container").innerHTML = html;
-    }
+      }
 
-    // --- MAINTENANCE ---
-    const m = logM.filter(r => (r["Serial Number"] || "").trim() === serial.trim());
+      // ====== LOG MAINTENANCE ======
+      const filteredM = logM.filter(r => r[serialColM] === serial);
 
-    if (m.length === 0) {
+      if (filteredM.length === 0) {
         document.getElementById("log-maintenance").innerHTML = "Tidak ada data.";
-    } else {
-        let html = `<table><tr>`;
-        Object.keys(m[0]).forEach(k => html += `<th>${k}</th>`);
-        html += `</tr>`;
+      } else {
+        let html = "<table><tr>";
+        Object.keys(filteredM[0]).forEach(k => html += `<th>${k}</th>`);
+        html += "</tr>";
 
-        m.forEach(r => {
-            html += "<tr>";
-            Object.keys(r).forEach(k => {
-                let val = r[k] || "-";
-                if (val.startsWith("http")) {
-                    val = `<a href="${val}" target="_blank">🔗 Dokumen</a>`;
-                }
-                html += `<td>${val}</td>`;
-            });
-            html += "</tr>";
+        filteredM.forEach(r => {
+          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>";
         });
 
-        html += `</table>`;
+        html += "</table>";
         document.getElementById("log-maintenance").innerHTML = html;
-    }
+      }
 
-    // --- CALIBRATION ---
-    const c = logC.filter(r => (r["Serial Number"] || "").trim() === serial.trim());
+      // ====== LOG CALIBRATION ======
+      const filteredC = logC.filter(r => r[serialColC] === serial);
 
-    if (c.length === 0) {
+      if (filteredC.length === 0) {
         document.getElementById("log-calibration").innerHTML = "Tidak ada data.";
-    } else {
-        let html = `<table><tr>`;
-        Object.keys(c[0]).forEach(k => html += `<th>${k}</th>`);
-        html += `</tr>`;
+      } else {
+        let html = "<table><tr>";
+        Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
+        html += "</tr>";
 
-        c.forEach(r => {
-            html += "<tr>";
-            Object.keys(r).forEach(k => {
-                let val = r[k] || "-";
-                if (val.startsWith("http")) {
-                    val = `<a href="${val}" target="_blank">🔗 Dokumen</a>`;
-                }
-                html += `<td>${val}</td>`;
-            });
-            html += "</tr>";
+        filteredC.forEach(r => {
+          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>";
         });
 
-        html += `</table>`;
+        html += "</table>";
         document.getElementById("log-calibration").innerHTML = html;
+      }
     }
-}
 
-loadData();
-</script>
-
+    loadData();
+  </script>
 </body>
 </html>
