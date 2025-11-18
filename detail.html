@@ -1,20 +1,44 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detail Alat | Virtu DigiLab</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h2 { margin-top: 30px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f2f2f2; }
-    .notfound { color: red; font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 15px;
+    }
+    h2 {
+      margin-top: 35px;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f2f2f2;
+    }
+    .notfound {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+
   <h1>Detail Alat</h1>
   <div id="data-container">Memuat data...</div>
 
@@ -26,7 +50,7 @@
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const serial = urlParams.get('serial');
+    const serial = urlParams.get("serial");
 
     const NRC_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
@@ -35,7 +59,9 @@
     const LOG_C_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-    // CSV parser kuat
+    // ===============================
+    //      CSV Parser Kuat
+    // ===============================
     function csvToJson(csvText) {
       const rows = [];
       let current = "";
@@ -43,7 +69,7 @@
       let insideQuote = false;
 
       for (let char of csvText) {
-        if (char === '"') insideQuote = !insideQuote;
+        if (char === "\"") insideQuote = !insideQuote;
         else if (char === "," && !insideQuote) {
           row.push(current.trim());
           current = "";
@@ -79,72 +105,79 @@
     }
 
     function findSerialColumn(obj) {
-      return Object.keys(obj).find(k => k.toLowerCase().includes("serial")) || null;
+      return Object.keys(obj).find((k) => k.toLowerCase().includes("serial")) || null;
     }
 
+    // ===============================
+    //        Load Semua Data
+    // ===============================
     async function loadData() {
       const nrc = await loadCSV(NRC_URL);
       const logM = await loadCSV(LOG_M_URL);
       const logC = await loadCSV(LOG_C_URL);
 
       const serialColNRC = findSerialColumn(nrc[0]);
-      const serialColM   = findSerialColumn(logM[0]);
-      const serialColC   = findSerialColumn(logC[0]);
+      const serialColM = findSerialColumn(logM[0]);
+      const serialColC = findSerialColumn(logC[0]);
 
-      // FILTER: hanya row yang punya serial
-      const cleanNRC = nrc.filter(r => r[serialColNRC] && r[serialColNRC].trim() !== "");
-      const cleanM   = logM.filter(r => r[serialColM] && r[serialColM].trim() !== "");
-      const cleanC   = logC.filter(r => r[serialColC] && r[serialColC].trim() !== "");
+      const cleanNRC = nrc.filter((r) => r[serialColNRC] && r[serialColNRC].trim() !== "");
+      const cleanM = logM.filter((r) => r[serialColM] && r[serialColM].trim() !== "");
+      const cleanC = logC.filter((r) => r[serialColC] && r[serialColC].trim() !== "");
 
-      // ====== DETAIL NRC ======
-      const data = cleanNRC.find(r => r[serialColNRC] === serial);
+      // ==========================
+      //       DETAIL ASSET
+      // ==========================
+      const data = cleanNRC.find((r) => r[serialColNRC] === serial);
 
       if (!data) {
         document.getElementById("data-container").innerHTML =
           `<p class="notfound">Data tidak ditemukan untuk Serial: ${serial}</p>`;
       } else {
         let html = `<table>`;
-        Object.keys(data).forEach(k => {
+        Object.keys(data).forEach((k) => {
           html += `<tr><th>${k}</th><td>${data[k]}</td></tr>`;
         });
         html += `</table>`;
         document.getElementById("data-container").innerHTML = html;
       }
 
-      // ====== MAINTENANCE ======
-      const filteredM = cleanM.filter(r => r[serialColM] === serial);
+      // ==========================
+      //       LOG MAINTENANCE
+      // ==========================
+      const filteredM = cleanM.filter((r) => r[serialColM] === serial);
 
       if (filteredM.length === 0) {
         document.getElementById("log-maintenance").innerHTML = "Tidak ada data.";
       } else {
-        let html = "<table><tr>";
-        Object.keys(filteredM[0]).forEach(k => html += `<th>${k}</th>`);
-        html += "</tr>";
+        let html = `<table><tr>`;
+        Object.keys(filteredM[0]).forEach((k) => (html += `<th>${k}</th>`));
+        html += `</tr>`;
 
-        filteredM.forEach(r => {
-          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>";
+        filteredM.forEach((r) => {
+          html += `<tr>` + Object.values(r).map((v) => `<td>${v}</td>`).join("") + `</tr>`;
         });
 
-        html += "</table>";
+        html += `</table>`;
         document.getElementById("log-maintenance").innerHTML = html;
       }
 
-      // ====== CALIBRATION ======
-      const filteredC = cleanC.filter(r => r[serialColC] === serial);
+      // ==========================
+      //       LOG CALIBRATION
+      // ==========================
+      const filteredC = cleanC.filter((r) => r[serialColC] === serial);
 
       if (filteredC.length === 0) {
         document.getElementById("log-calibration").innerHTML = "Tidak ada data.";
       } else {
-        let html = "<table><tr>";
-        Object.keys(filteredC[0]).forEach(k => html += `<th>${k}</th>`);
-        html += "</tr>";
+        let html = `<table><tr>`;
+        Object.keys(filteredC[0]).forEach((k) => (html += `<th>${k}</th>`));
+        html += `</tr>`;
 
-        // ✅ FIX ERROR DI SINI — sekarang sudah benar
-        filteredC.forEach(r => {
-          html += "<tr>" + Object.values(r).map(v => `<td>${v}</td>`).join("") + "</tr>";
+        filteredC.forEach((r) => {
+          html += `<tr>` + Object.values(r).map((v) => `<td>${v}</td>`).join("") + `</tr>`;
         });
 
-        html += "</table>";
+        html += `</table>`;
         document.getElementById("log-calibration").innerHTML = html;
       }
     }
