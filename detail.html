@@ -48,25 +48,16 @@
     const LOG_C_URL =
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
-    /* ========================== CSV PARSER KUAT ========================== */
+    /* ========================== CSV PARSER ========================== */
     function csvToJson(csvText) {
       const rows = [];
       let current = "", row = [], insideQuote = false;
 
       for (let char of csvText) {
-        if (char === '"') {
-          insideQuote = !insideQuote;
-        } else if (char === "," && !insideQuote) {
-          row.push(current.trim());
-          current = "";
-        } else if (char === "\n" && !insideQuote) {
-          row.push(current.trim());
-          rows.push(row);
-          row = [];
-          current = "";
-        } else {
-          current += char;
-        }
+        if (char === '"') insideQuote = !insideQuote;
+        else if (char === "," && !insideQuote) { row.push(current.trim()); current = ""; }
+        else if (char === "\n" && !insideQuote) { row.push(current.trim()); rows.push(row); row = []; current = ""; }
+        else current += char;
       }
 
       if (current) row.push(current.trim());
@@ -77,11 +68,10 @@
 
       for (let i = 1; i < rows.length; i++) {
         const obj = {};
-        headers.forEach((h, j) => {
-          obj[h.trim()] = rows[i][j] ? rows[i][j].trim() : "";
-        });
+        headers.forEach((h, j) => obj[h.trim()] = rows[i][j] ? rows[i][j].trim() : "");
         json.push(obj);
       }
+
       return json;
     }
 
@@ -95,7 +85,7 @@
       return Object.keys(obj).find(k => k.toLowerCase().includes("serial")) || null;
     }
 
-    /* ========================== HALAMAN DETAIL ========================== */
+    /* ========================== LOAD DATA ========================== */
     async function loadData() {
       const nrc  = await loadCSV(NRC_URL);
       const logM = await loadCSV(LOG_M_URL);
@@ -124,12 +114,12 @@
       Object.keys(item).forEach(key => {
         html += `<tr><th>${key}</th><td>${item[key]}</td></tr>`;
 
-        // Insert QR Code immediately after Place Type
+        /* ---- QR CODE DITEMPATKAN TEPAT SETELAH Place Type ---- */
         if (!qrInserted && key.toLowerCase().includes("place type")) {
           html += `
             <tr>
               <th>QR Code</th>
-              <td class="qr-cell" id="qr-code-cell"></td>
+              <td class="qr-cell"><div id="qr-code-cell"></div></td>
             </tr>
           `;
           qrInserted = true;
@@ -139,14 +129,15 @@
       html += "</table>";
       container.innerHTML = html;
 
+      /* ---- GENERATE QR CODE ---- */
       const qrCell = document.getElementById("qr-code-cell");
       if (qrCell) {
         const qr = new QRCodeStyling({
           width: 160,
           height: 160,
-          data: window.location.href,
+          data: window.location.href, 
           dotsOptions: { color: "#000", type: "rounded" },
-          backgroundOptions: { color: "#fff" }
+          backgroundOptions: { color: "#ffffff" }
         });
         qr.append(qrCell);
       }
