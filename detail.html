@@ -7,43 +7,25 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Library QR Code Styling (BENAR) -->
-  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
-
   <style>
-    .qr-box {
+    table th {
+      background: #f1f5f9;
       width: 180px;
-      height: 180px;
+      text-align: left;
+    }
+    .qr-box {
+      width: 160px;
       margin: 20px auto;
     }
-
-    .detail-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0;
-    }
-
-    .detail-table th,
-    .detail-table td {
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-
-    .detail-section {
-      margin-bottom: 35px;
-    }
-
     .section-title {
+      margin-top: 40px;
       font-size: 20px;
       font-weight: bold;
-      margin-bottom: 10px;
-      margin-top: 40px;
     }
-
-    .not-found {
+    .notfound {
       color: red;
+      text-align: center;
       font-weight: bold;
-      padding: 10px;
     }
   </style>
 </head>
@@ -51,135 +33,31 @@
 <body>
 
   <header>
-    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png"
-         alt="Virtu DigiLab Logo" class="logo" />
-    <h1>Detail Alat Laboratorium</h1>
+    <a href="index.html" class="home-btn">← Kembali</a>
+    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png" class="logo" />
+    <h1>Detail Alat</h1>
   </header>
 
   <main>
-    <div id="detailContainer">
-      <p class="loading">Memuat data...</p>
-    </div>
+    <h2 class="section-title">Informasi Alat</h2>
+    <div id="data-container">Memuat data...</div>
+
+    <h2 class="section-title">Log Maintenance</h2>
+    <div id="log-maintenance">Memuat...</div>
+
+    <h2 class="section-title">Log Calibration</h2>
+    <div id="log-calibration">Memuat...</div>
   </main>
 
   <footer>
-    &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
+    &copy; 2025 Virtu DigiLab
   </footer>
 
-  <script>
-    // ==============================
-    // Konfigurasi sumber data CSV
-    // ==============================
-    const CSV_URL =
-      "https://raw.githubusercontent.com/nurfaputra22/virtudigilab_equipment_web/main/data.csv";
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
-    // Ambil SN dari URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const serialNumber = urlParams.get("sn");
+  <!-- Script utama -->
+  <script src="script.js"></script>
 
-    // Elemen target
-    const container = document.getElementById("detailContainer");
-
-    // ==============================
-    // Fungsi parsing CSV
-    // ==============================
-    async function loadCSV(url) {
-      const res = await fetch(url);
-      const text = await res.text();
-
-      const rows = text.split("\n").map(r => r.trim());
-      const headers = rows[0].split(",").map(h => h.trim());
-
-      return rows.slice(1).map(row => {
-        const cols = row.split(",");
-        const obj = {};
-        headers.forEach((h, i) => (obj[h] = cols[i] || ""));
-        return obj;
-      });
-    }
-
-    // ==============================
-    // QR CODE Generator
-    // ==============================
-    function generateQRCode(serial) {
-      const qrBox = document.getElementById("qrBox");
-      if (!qrBox) return;
-
-      const detailLink = window.location.href;
-
-      const qr = new QRCodeStyling({
-        width: 180,
-        height: 180,
-        data: detailLink,
-        dotsOptions: { type: "rounded" },
-        backgroundOptions: { color: "#ffffff" },
-        imageOptions: { hideBackgroundDots: false }
-      });
-
-      qr.append(qrBox);
-    }
-
-    // ==============================
-    // Load Data Detail
-    // ==============================
-    async function init() {
-      if (!serialNumber) {
-        container.innerHTML = `<p class="not-found">Serial Number tidak ditemukan di URL.</p>`;
-        return;
-      }
-
-      try {
-        const data = await loadCSV(CSV_URL);
-
-        const item = data.find(d => d["Serial Number"] === serialNumber);
-
-        if (!item) {
-          container.innerHTML = `<p class="not-found">Data alat dengan SN <b>${serialNumber}</b> tidak ditemukan.</p>`;
-          return;
-        }
-
-        // Render detail
-        container.innerHTML = `
-          <div class="detail-section">
-            <div class="section-title">QR Code Alat</div>
-            <div class="qr-box" id="qrBox"></div>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-title">Detail Alat</div>
-            <table class="detail-table">
-              <tr><th>Serial Number</th><td>${item["Serial Number"]}</td></tr>
-              <tr><th>Asset Description</th><td>${item["Asset Description"]}</td></tr>
-              <tr><th>Location</th><td>${item["Location"]}</td></tr>
-              <tr><th>Category</th><td>${item["Category"]}</td></tr>
-              <tr><th>Brand</th><td>${item["Brand"]}</td></tr>
-              <tr><th>Type</th><td>${item["Type"]}</td></tr>
-              <tr><th>Model</th><td>${item["Model"]}</td></tr>
-              <tr><th>Date Received</th><td>${item["Date Received"]}</td></tr>
-              <tr><th>Condition</th><td>${item["Condition"]}</td></tr>
-            </table>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-title">Maintenance Log</div>
-            <p>${item["Maintenance Log"] || "Tidak ada data"}</p>
-          </div>
-
-          <div class="detail-section">
-            <div class="section-title">Calibration Log</div>
-            <p>${item["Calibration Log"] || "Tidak ada data"}</p>
-          </div>
-        `;
-
-        // Generate QR
-        generateQRCode(serialNumber);
-
-      } catch (err) {
-        container.innerHTML = `<p class="not-found">Gagal memuat data.</p>`;
-      }
-    }
-
-    init();
-  </script>
 </body>
 </html>
