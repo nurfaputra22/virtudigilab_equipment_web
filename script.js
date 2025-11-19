@@ -14,7 +14,7 @@ const LOG_C_URL =
 
 
 // =========================
-// CSV PARSER (robust)
+// CSV PARSER
 // =========================
 function csvToParsed(csvText) {
   const rows = [];
@@ -29,9 +29,7 @@ function csvToParsed(csvText) {
       if (csvText[i + 1] === '"') {
         current += '"';
         i++;
-      } else {
-        insideQuote = !insideQuote;
-      }
+      } else insideQuote = !insideQuote;
     } else if (char === "," && !insideQuote) {
       row.push(current.trim());
       current = "";
@@ -43,9 +41,7 @@ function csvToParsed(csvText) {
         current = "";
       }
       if (char === "\r" && csvText[i + 1] === "\n") i++;
-    } else {
-      current += char;
-    }
+    } else current += char;
   }
 
   if (current !== "" || row.length > 0) {
@@ -53,9 +49,7 @@ function csvToParsed(csvText) {
     rows.push(row);
   }
 
-  // FIX: Remove empty rows
   const cleanRows = rows.filter((r) => r.some((c) => c && c.trim() !== ""));
-
   if (!cleanRows.length) return { headers: [], rows: [], objects: [] };
 
   const headers = cleanRows[0].map((h) => (h || "").trim());
@@ -83,9 +77,7 @@ async function loadCSVParsed(url) {
 // Helpers
 // =========================
 function findSerialColumnFromHeaders(headers) {
-  return (
-    headers.find((h) => (h || "").toLowerCase().includes("serial")) || null
-  );
+  return headers.find((h) => (h || "").toLowerCase().includes("serial")) || null;
 }
 
 function makeDocumentLink(url) {
@@ -100,7 +92,7 @@ function makeDocumentLink(url) {
 
 
 // =========================
-// INDEX.HTML — loadAssets()
+// INDEX.HTML
 // =========================
 async function loadAssets() {
   const tbody = document.getElementById("assetGrid");
@@ -118,22 +110,20 @@ async function loadAssets() {
 
     const serialCol = findSerialColumnFromHeaders(headers);
     const descCol =
-      headers.find((h) => (h || "").toLowerCase().includes("description")) ||
-      headers[0];
+      headers.find((h) => h.toLowerCase().includes("description")) ||
+      headers[1];
 
     const locationCol =
-      headers.find((h) => (h || "").toLowerCase().includes("location")) ||
-      headers[2] ||
-      headers[0];
+      headers.find((h) => h.toLowerCase().includes("location")) ||
+      headers[2];
 
     tbody.innerHTML = "";
     let no = 1;
 
     data.forEach((item, index) => {
-      const serial = item[serialCol] || "";
+      const serial = item[serialCol];
       if (!serial) return;
 
-      // ALWAYS ABSOLUTE URL
       const detailUrl =
         BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
 
@@ -149,13 +139,13 @@ async function loadAssets() {
 
       tbody.insertAdjacentHTML("beforeend", row);
 
-      // QR Code menu utama
       new QRCode(document.querySelector(`.qr-${index}`), {
         text: detailUrl,
         width: 80,
         height: 80,
       });
     });
+
   } catch (err) {
     console.error(err);
     tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
@@ -165,7 +155,7 @@ async function loadAssets() {
 
 
 // =========================
-// DETAIL.HTML — loadDetailPage()
+// DETAIL.HTML
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -179,15 +169,9 @@ async function loadDetailPage() {
   ]);
 
   const nrc = nrcParsed.objects;
-  const nrcHeaders = nrcParsed.headers;
+  const headers = nrcParsed.headers;
+  const serialCol = findSerialColumnFromHeaders(headers);
 
-  const mHeaders = mParsed.headers;
-  const mObjects = mParsed.objects;
-
-  const cHeaders = cParsed.headers;
-  const cObjects = cParsed.objects;
-
-  const serialCol = findSerialColumnFromHeaders(nrcHeaders);
   const container = document.getElementById("data-container");
 
   const item = nrc.find(
@@ -195,19 +179,16 @@ async function loadDetailPage() {
   );
 
   if (!item) {
-    container.innerHTML = `<p class="notfound">Data tidak ditemukan.</p>`;
+    container.innerHTML = `<p>Data tidak ditemukan.</p>`;
     return;
   }
 
-  // Build detail table
   let html = "<table>";
   let qrInserted = false;
 
-  nrcHeaders.forEach((key) => {
-    const val = item[key] || "";
-    html += `<tr><th>${key}</th><td>${val}</td></tr>`;
+  headers.forEach((key) => {
+    html += `<tr><th>${key}</th><td>${item[key] || ""}</td></tr>`;
 
-    // Insert QR after Place Type
     if (!qrInserted && key.toLowerCase().includes("place")) {
       html += `
         <tr>
@@ -221,13 +202,10 @@ async function loadDetailPage() {
   html += "</table>";
   container.innerHTML = html;
 
-
-  // ALWAYS ABSOLUTE QR URL
   const finalDetailUrl =
     BASE_PATH + "detail.html?serial=" + encodeURIComponent(serialParam);
 
   const qrCell = document.getElementById("qr-code-cell");
-
   if (qrCell) {
     new QRCode(qrCell, {
       text: finalDetailUrl,
@@ -236,30 +214,29 @@ async function loadDetailPage() {
     });
   }
 
-
-  // =========================
-  // LOG MAINTENANCE
-  // =========================
+  // Maintenance Log
   const logMContainer = document.getElementById("log-maintenance");
-  const serialColM = findSerialColumnFromHeaders(mHeaders);
-  const matchedM = mObjects.filter(
+  const serialColM = findSerialColumnFromHeaders(mParsed.headers);
+  const matchedM = mParsed.objects.filter(
     (r) => (r[serialColM] || "").trim() === serialParam
   );
 
-  if (matchedM.length === 0) {
+  if (!matchedM.length) {
     logMContainer.innerHTML = "Tidak ada data.";
   } else {
     let headerHtml = "<table><tr>";
-    mHeaders.forEach((h) => (headerHtml += `<th>${h}</th>`));
+    mParsed.headers.forEach((h) => (headerHtml += `<th>${h}</th>`));
     headerHtml += "</tr>";
 
     let bodyHtml = "";
-    matchedM.forEach((rowObj) => {
+    matchedM.forEach((obj) => {
       bodyHtml += "<tr>";
-      mHeaders.forEach((h) => {
+      mParsed.headers.forEach((h) => {
         if (h.toLowerCase() === "document") {
-          bodyHtml += `<td>${makeDocumentLink(rowObj[h])}</td>`;
-        } else bodyHtml += `<td>${rowObj[h] || ""}</td>`;
+          bodyHtml += `<td>${makeDocumentLink(obj[h])}</td>`;
+        } else {
+          bodyHtml += `<td>${obj[h] || ""}</td>`;
+        }
       });
       bodyHtml += "</tr>";
     });
@@ -267,30 +244,29 @@ async function loadDetailPage() {
     logMContainer.innerHTML = headerHtml + bodyHtml + "</table>";
   }
 
-
-  // =========================
-  // LOG CALIBRATION
-  // =========================
+  // Calibration Log
   const logCContainer = document.getElementById("log-calibration");
-  const serialColC = findSerialColumnFromHeaders(cHeaders);
-  const matchedC = cObjects.filter(
+  const serialColC = findSerialColumnFromHeaders(cParsed.headers);
+  const matchedC = cParsed.objects.filter(
     (r) => (r[serialColC] || "").trim() === serialParam
   );
 
-  if (matchedC.length === 0) {
+  if (!matchedC.length) {
     logCContainer.innerHTML = "Tidak ada data.";
   } else {
     let headerHtml = "<table><tr>";
-    cHeaders.forEach((h) => (headerHtml += `<th>${h}</th>`));
+    cParsed.headers.forEach((h) => (headerHtml += `<th>${h}</th>`));
     headerHtml += "</tr>";
 
     let bodyHtml = "";
-    matchedC.forEach((rowObj) => {
+    matchedC.forEach((obj) => {
       bodyHtml += "<tr>";
-      cHeaders.forEach((h) => {
+      cParsed.headers.forEach((h) => {
         if (h.toLowerCase() === "document") {
-          bodyHtml += `<td>${makeDocumentLink(rowObj[h])}</td>`;
-        } else bodyHtml += `<td>${rowObj[h] || ""}</td>`;
+          bodyHtml += `<td>${makeDocumentLink(obj[h])}</td>`;
+        } else {
+          bodyHtml += `<td>${obj[h] || ""}</td>`;
+        }
       });
       bodyHtml += "</tr>";
     });
