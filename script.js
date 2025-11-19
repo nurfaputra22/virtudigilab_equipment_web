@@ -151,7 +151,7 @@ async function loadAssets() {
 
       tbody.insertAdjacentHTML("beforeend", row);
 
-      // QR CODE SAMA DENGAN QR DI DETAIL PAGE
+      // QR CODE (sama dengan detail page)
       new QRCode(document.querySelector(`.qr-${index}`), {
         text: `detail.html?serial=${encodeURIComponent(serial)}`,
         width: 80,
