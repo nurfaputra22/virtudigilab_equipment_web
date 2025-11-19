@@ -1,6 +1,8 @@
 // =========================
 // CONFIG
 // =========================
+const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
+
 const NRC_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
 
@@ -51,10 +53,13 @@ function csvToParsed(csvText) {
     rows.push(row);
   }
 
-  if (!rows.length) return { headers: [], rows: [], objects: [] };
+  // FIX: Remove empty rows
+  const cleanRows = rows.filter((r) => r.some((c) => c && c.trim() !== ""));
 
-  const headers = rows[0].map((h) => (h || "").trim());
-  const dataRows = rows.slice(1);
+  if (!cleanRows.length) return { headers: [], rows: [], objects: [] };
+
+  const headers = cleanRows[0].map((h) => (h || "").trim());
+  const dataRows = cleanRows.slice(1);
 
   const objects = dataRows.map((r) => {
     const obj = {};
@@ -122,19 +127,15 @@ async function loadAssets() {
       headers[0];
 
     tbody.innerHTML = "";
-
     let no = 1;
-
-    // Base path absolute untuk GitHub Pages
-    const basePath =
-      "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
     data.forEach((item, index) => {
       const serial = item[serialCol] || "";
       if (!serial) return;
 
+      // ALWAYS ABSOLUTE URL
       const detailUrl =
-        basePath + "detail.html?serial=" + encodeURIComponent(serial);
+        BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
 
       const row = `
         <tr>
@@ -204,10 +205,10 @@ async function loadDetailPage() {
 
   nrcHeaders.forEach((key) => {
     const val = item[key] || "";
-
     html += `<tr><th>${key}</th><td>${val}</td></tr>`;
 
-    if (!qrInserted && key.toLowerCase().includes("place type")) {
+    // Insert QR after Place Type
+    if (!qrInserted && key.toLowerCase().includes("place")) {
       html += `
         <tr>
           <th>QR Code</th>
@@ -221,18 +222,15 @@ async function loadDetailPage() {
   container.innerHTML = html;
 
 
-  // =======================================
-  // FIX QR DETAIL PAGE — Selalu URL Absolut
-  // =======================================
-  const currentUrl =
-    "https://nurfaputra22.github.io/virtudigilab_equipment_web/detail.html?serial=" +
-    encodeURIComponent(serialParam);
+  // ALWAYS ABSOLUTE QR URL
+  const finalDetailUrl =
+    BASE_PATH + "detail.html?serial=" + encodeURIComponent(serialParam);
 
   const qrCell = document.getElementById("qr-code-cell");
 
   if (qrCell) {
     new QRCode(qrCell, {
-      text: currentUrl,
+      text: finalDetailUrl,
       width: 160,
       height: 160,
     });
@@ -252,9 +250,7 @@ async function loadDetailPage() {
     logMContainer.innerHTML = "Tidak ada data.";
   } else {
     let headerHtml = "<table><tr>";
-    mHeaders.forEach((h) => {
-      headerHtml += `<th>${h}</th>`;
-    });
+    mHeaders.forEach((h) => (headerHtml += `<th>${h}</th>`));
     headerHtml += "</tr>";
 
     let bodyHtml = "";
@@ -263,9 +259,7 @@ async function loadDetailPage() {
       mHeaders.forEach((h) => {
         if (h.toLowerCase() === "document") {
           bodyHtml += `<td>${makeDocumentLink(rowObj[h])}</td>`;
-        } else {
-          bodyHtml += `<td>${rowObj[h] || ""}</td>`;
-        }
+        } else bodyHtml += `<td>${rowObj[h] || ""}</td>`;
       });
       bodyHtml += "</tr>";
     });
@@ -287,9 +281,7 @@ async function loadDetailPage() {
     logCContainer.innerHTML = "Tidak ada data.";
   } else {
     let headerHtml = "<table><tr>";
-    cHeaders.forEach((h) => {
-      headerHtml += `<th>${h}</th>`;
-    });
+    cHeaders.forEach((h) => (headerHtml += `<th>${h}</th>`));
     headerHtml += "</tr>";
 
     let bodyHtml = "";
@@ -298,9 +290,7 @@ async function loadDetailPage() {
       cHeaders.forEach((h) => {
         if (h.toLowerCase() === "document") {
           bodyHtml += `<td>${makeDocumentLink(rowObj[h])}</td>`;
-        } else {
-          bodyHtml += `<td>${rowObj[h] || ""}</td>`;
-        }
+        } else bodyHtml += `<td>${rowObj[h] || ""}</td>`;
       });
       bodyHtml += "</tr>";
     });
