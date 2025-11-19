@@ -154,7 +154,7 @@
       } else {
         let htmlM = "<table><tr>";
         Object.keys(Mdata[0]).forEach(k => {
-          if (k.toLowerCase().includes("document")) htmlM += `<th>Lampiran File</th>`;
+          if (k.toLowerCase().includes("document")) htmlM += `<th>Document</th>`;
           else htmlM += `<th>${k}</th>`;
         });
         htmlM += "</tr>";
@@ -189,7 +189,7 @@
       } else {
         let htmlC = "<table><tr>";
         Object.keys(Cdata[0]).forEach(k => {
-          if (k.toLowerCase().includes("document")) htmlC += `<th>Lampiran File</th>`;
+          if (k.toLowerCase().includes("document")) htmlC += `<th>Document</th>`;
           else htmlC += `<th>${k}</th>`;
         });
         htmlC += "</tr>";
