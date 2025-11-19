@@ -130,7 +130,12 @@ async function loadAssets() {
           <tr>
           <td>${no++}</td>
 
-          <td>${serial}</td>
+          <td>
+              <a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">
+              ${serial}
+              </a>
+          </td>
+
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
           <td><a href="detail.html?serial=${encodeURIComponent(
@@ -285,4 +290,5 @@ async function loadDetailPage() {
 // =========================
 if (document.getElementById("assetGrid")) loadAssets();
 if (document.getElementById("data-container")) loadDetailPage();
+
 
