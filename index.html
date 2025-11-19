@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="style.css" />
 
   <style>
-    /* Tambahan jika style.css belum mengatur ukuran logo */
     .logo {
       height: 60px;
       margin-right: 10px;
@@ -19,6 +18,12 @@
       align-items: center;
       gap: 15px;
       padding: 15px;
+    }
+
+    .qr-box {
+      width: 90px;
+      height: 90px;
+      margin: auto;
     }
   </style>
 
@@ -57,12 +62,11 @@
     &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
   </footer>
 
-  <!-- QRCode library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- Library QRCodeStyling (SAMA PERSIS dengan detail.html) -->
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
 
-  <!-- script kamu -->
+  <!-- Script utama -->
   <script src="script.js"></script>
-
 
 </body>
 </html>
