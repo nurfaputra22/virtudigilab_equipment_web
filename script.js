@@ -138,13 +138,17 @@ async function loadAssets() {
 
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
-          <td><a href="detail.html?serial=${encodeURIComponent(
-            serial
-          )}" target="_blank">Lihat</a></td>
+          <td><div class="qr-${index}"></div></td>
         </tr>
       `;
 
       tbody.insertAdjacentHTML("beforeend", row);
+        // Generate QR Code untuk daftar alat
+      new QRCode(document.querySelector(`.qr-${index}`), {
+        text: `detail.html?serial=${encodeURIComponent(serial)}`,
+        width: 80,
+        height: 80
+        });
     });
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
@@ -290,5 +294,6 @@ async function loadDetailPage() {
 // =========================
 if (document.getElementById("assetGrid")) loadAssets();
 if (document.getElementById("data-container")) loadDetailPage();
+
 
 
