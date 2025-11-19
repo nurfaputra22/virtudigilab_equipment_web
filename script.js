@@ -11,7 +11,6 @@ const LOG_C_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
 
-
 // =========================
 // CSV PARSER (robust)
 // =========================
@@ -68,13 +67,11 @@ function csvToParsed(csvText) {
   return { headers, rows: dataRows, objects };
 }
 
-
 async function loadCSVParsed(url) {
   const res = await fetch(url);
   const txt = await res.text();
   return csvToParsed(txt);
 }
-
 
 
 // =========================
@@ -94,7 +91,6 @@ function makeDocumentLink(url) {
       : `https://${url}`;
   return `<a href="${valid}" target="_blank" rel="noopener noreferrer">Lampiran File</a>`;
 }
-
 
 
 // =========================
@@ -128,18 +124,27 @@ async function loadAssets() {
 
     let no = 1;
 
+    // --- URL ABSOLUT BASE ---
+    const basePath =
+      window.location.origin +
+      window.location.pathname.substring(
+        0,
+        window.location.pathname.lastIndexOf("/") + 1
+      );
+
     data.forEach((item, index) => {
       const serial = item[serialCol] || "";
       if (!serial) return;
+
+      const detailUrl =
+        basePath + "detail.html?serial=" + encodeURIComponent(serial);
 
       const row = `
         <tr>
           <td>${no++}</td>
 
           <td>
-            <a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">
-              ${serial}
-            </a>
+            <a href="${detailUrl}" target="_blank">${serial}</a>
           </td>
 
           <td>${item[descCol] || ""}</td>
@@ -151,14 +156,15 @@ async function loadAssets() {
 
       tbody.insertAdjacentHTML("beforeend", row);
 
-      // QR CODE (sama dengan detail page)
+      // ===========================
+      // QR CODE (URL ABSOLUT)
+      // ===========================
       new QRCode(document.querySelector(`.qr-${index}`), {
-        text: `detail.html?serial=${encodeURIComponent(serial)}`,
+        text: detailUrl,
         width: 80,
         height: 80,
       });
     });
-
   } catch (err) {
     console.error(err);
     tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
@@ -224,11 +230,15 @@ async function loadDetailPage() {
   html += "</table>";
   container.innerHTML = html;
 
-  // Buat QR detail page (sama format dengan menu utama)
+  // ===========================
+  // QR DETAIL PAGE (URL ABSOLUT)
+  // ===========================
+  const currentUrl = window.location.href;
   const qrCell = document.getElementById("qr-code-cell");
+
   if (qrCell) {
     new QRCode(qrCell, {
-      text: `detail.html?serial=${encodeURIComponent(serialParam)}`,
+      text: currentUrl,
       width: 160,
       height: 160,
     });
@@ -304,7 +314,6 @@ async function loadDetailPage() {
     logCContainer.innerHTML = headerHtml + bodyHtml + "</table>";
   }
 }
-
 
 
 // =========================
