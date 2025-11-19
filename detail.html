@@ -164,7 +164,11 @@
           Object.keys(row).forEach(k => {
             let cell = row[k];
 
-            if (k.toLowerCase().includes("sertifikat")) cell = "-";
+            if (k.toLowerCase().includes("document")) {
+              if (cell.startsWith("http")) {
+                cell = `<a href="${cell}" target="_blank">Buka File</a>`;
+              }
+            }
 
             htmlM += `<td>${cell}</td>`;
           });
@@ -195,7 +199,11 @@
           Object.keys(row).forEach(k => {
             let cell = row[k];
 
-            if (k.toLowerCase().includes("sertifikat")) cell = "-";
+            if (k.toLowerCase().includes("document")) {
+              if (cell.startsWith("http")) {
+                cell = `<a href="${cell}" target="_blank">Buka File</a>`;
+              }
+            }
 
             htmlC += `<td>${cell}</td>`;
           });
