@@ -1,204 +1,185 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detail Alat | Virtu DigiLab</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Library QR Code Styling (BENAR) -->
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0/lib/qr-code-styling.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { margin-bottom: 20px; }
-    h2 { margin-top: 30px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f2f2f2; width: 220px; }
-    .notfound { color: red; font-weight: bold; }
-    .qr-cell { text-align: center; padding: 15px; }
+    .qr-box {
+      width: 180px;
+      height: 180px;
+      margin: 20px auto;
+    }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+
+    .detail-section {
+      margin-bottom: 35px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      margin-top: 40px;
+    }
+
+    .not-found {
+      color: red;
+      font-weight: bold;
+      padding: 10px;
+    }
   </style>
 </head>
 
 <body>
 
-  <h1>Detail Alat</h1>
+  <header>
+    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png"
+         alt="Virtu DigiLab Logo" class="logo" />
+    <h1>Detail Alat Laboratorium</h1>
+  </header>
 
-  <div id="data-container">Memuat data...</div>
+  <main>
+    <div id="detailContainer">
+      <p class="loading">Memuat data...</p>
+    </div>
+  </main>
 
-  <h2>Log Maintenance</h2>
-  <div id="log-maintenance">Memuat...</div>
-
-  <h2>Log Calibration</h2>
-  <div id="log-calibration">Memuat...</div>
-
-  <!-- QR Code Styling Library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-  <script src="script.js"></script>
+  <footer>
+    &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
+  </footer>
 
   <script>
+    // ==============================
+    // Konfigurasi sumber data CSV
+    // ==============================
+    const CSV_URL =
+      "https://raw.githubusercontent.com/nurfaputra22/virtudigilab_equipment_web/main/data.csv";
+
+    // Ambil SN dari URL
     const urlParams = new URLSearchParams(window.location.search);
-    const serial = urlParams.get("serial");
+    const serialNumber = urlParams.get("sn");
 
-    /* === LINK DETAIL FIX, WAJIB === */
-    const DETAIL_LINK =
-      `https://nurfaputra22.github.io/virtudigilab_equipment_web/detail.html?serial=${serial}`;
+    // Elemen target
+    const container = document.getElementById("detailContainer");
 
-    /* === URL CSV === */
-    const NRC_URL =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
-
-    const LOG_M_URL =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
-
-    const LOG_C_URL =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
-
-    /* === CSV TO JSON === */
-    function csvToJson(csv) {
-      const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
-      const headers = lines[0].split(",").map(h => h.trim());
-      const out = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(",");
-        const obj = {};
-        headers.forEach((h, j) => {
-          obj[h] = cols[j] ? cols[j].trim() : "";
-        });
-        out.push(obj);
-      }
-      return out;
-    }
-
+    // ==============================
+    // Fungsi parsing CSV
+    // ==============================
     async function loadCSV(url) {
-      try {
-        const res = await fetch(url);
-        const txt = await res.text();
-        return csvToJson(txt);
-      } catch {
-        return [];
-      }
+      const res = await fetch(url);
+      const text = await res.text();
+
+      const rows = text.split("\n").map(r => r.trim());
+      const headers = rows[0].split(",").map(h => h.trim());
+
+      return rows.slice(1).map(row => {
+        const cols = row.split(",");
+        const obj = {};
+        headers.forEach((h, i) => (obj[h] = cols[i] || ""));
+        return obj;
+      });
     }
 
-    function findSerialColumn(obj) {
-      return Object.keys(obj).find(k =>
-        k.toLowerCase().includes("serial")
-      ) || null;
-    }
+    // ==============================
+    // QR CODE Generator
+    // ==============================
+    function generateQRCode(serial) {
+      const qrBox = document.getElementById("qrBox");
+      if (!qrBox) return;
 
-    /* === LOAD DATA === */
-    async function loadData() {
-      const nrc  = await loadCSV(NRC_URL);
-      const logM = await loadCSV(LOG_M_URL);
-      const logC = await loadCSV(LOG_C_URL);
+      const detailLink = window.location.href;
 
-      if (!nrc.length) {
-        document.getElementById("data-container").innerHTML =
-          "<p class='notfound'>Gagal memuat data.</p>";
-        return;
-      }
-
-      const serialColNRC = findSerialColumn(nrc[0]);
-      const item = nrc.find(r => r[serialColNRC] === serial);
-
-      const container = document.getElementById("data-container");
-
-      if (!item) {
-        container.innerHTML =
-          `<p class="notfound">Data tidak ditemukan untuk Serial: ${serial}</p>`;
-        return;
-      }
-
-      /* === TABEL DETAIL ALAT === */
-      let html = "<table>";
-      let qrInserted = false;
-
-      Object.keys(item).forEach(key => {
-        html += `<tr><th>${key}</th><td>${item[key]}</td></tr>`;
-
-        if (!qrInserted && key.toLowerCase().includes("place type")) {
-          html += `
-            <tr>
-              <th>QR Code</th>
-              <td class="qr-cell"><div id="qr-code-cell"></div></td>
-            </tr>
-          `;
-          qrInserted = true;
-        }
+      const qr = new QRCodeStyling({
+        width: 180,
+        height: 180,
+        data: detailLink,
+        dotsOptions: { type: "rounded" },
+        backgroundOptions: { color: "#ffffff" },
+        imageOptions: { hideBackgroundDots: false }
       });
 
-      html += "</table>";
-      container.innerHTML = html;
+      qr.append(qrBox);
+    }
 
-      /* === QR CODE === */
-      const qrCell = document.getElementById("qr-code-cell");
-      if (qrCell) {
-        const qr = new QRCodeStyling({
-          width: 180,
-          height: 180,
-          data: DETAIL_LINK,
-          dotsOptions: { type: "rounded" },
-          backgroundOptions: { color: "#ffffff" }
-        });
-        qr.append(qrCell);
+    // ==============================
+    // Load Data Detail
+    // ==============================
+    async function init() {
+      if (!serialNumber) {
+        container.innerHTML = `<p class="not-found">Serial Number tidak ditemukan di URL.</p>`;
+        return;
       }
 
-      /* === LOG MAINTENANCE === */
-      const serialColM = logM[0] ? findSerialColumn(logM[0]) : null;
-      const Mdata = logM.filter(r => r[serialColM] === serial);
-      const LM = document.getElementById("log-maintenance");
+      try {
+        const data = await loadCSV(CSV_URL);
 
-      if (!Mdata.length) LM.innerHTML = "Tidak ada data.";
-      else {
-        let t = "<table><tr>";
-        Object.keys(Mdata[0]).forEach(k => t += `<th>${k}</th>`);
-        t += "</tr>";
+        const item = data.find(d => d["Serial Number"] === serialNumber);
 
-        Mdata.forEach(r => {
-          t += "<tr>";
-          Object.keys(r).forEach(k => {
-            let val = r[k];
-            if (k.toLowerCase().includes("document") && val.startsWith("http"))
-              val = `<a href="${val}" target="_blank">Lampiran File</a>`;
-            t += `<td>${val}</td>`;
-          });
-          t += "</tr>";
-        });
+        if (!item) {
+          container.innerHTML = `<p class="not-found">Data alat dengan SN <b>${serialNumber}</b> tidak ditemukan.</p>`;
+          return;
+        }
 
-        t += "</table>";
-        LM.innerHTML = t;
-      }
+        // Render detail
+        container.innerHTML = `
+          <div class="detail-section">
+            <div class="section-title">QR Code Alat</div>
+            <div class="qr-box" id="qrBox"></div>
+          </div>
 
-      /* === LOG CALIBRATION === */
-      const serialColC = logC[0] ? findSerialColumn(logC[0]) : null;
-      const Cdata = logC.filter(r => r[serialColC] === serial);
-      const LC = document.getElementById("log-calibration");
+          <div class="detail-section">
+            <div class="section-title">Detail Alat</div>
+            <table class="detail-table">
+              <tr><th>Serial Number</th><td>${item["Serial Number"]}</td></tr>
+              <tr><th>Asset Description</th><td>${item["Asset Description"]}</td></tr>
+              <tr><th>Location</th><td>${item["Location"]}</td></tr>
+              <tr><th>Category</th><td>${item["Category"]}</td></tr>
+              <tr><th>Brand</th><td>${item["Brand"]}</td></tr>
+              <tr><th>Type</th><td>${item["Type"]}</td></tr>
+              <tr><th>Model</th><td>${item["Model"]}</td></tr>
+              <tr><th>Date Received</th><td>${item["Date Received"]}</td></tr>
+              <tr><th>Condition</th><td>${item["Condition"]}</td></tr>
+            </table>
+          </div>
 
-      if (!Cdata.length) LC.innerHTML = "Tidak ada data.";
-      else {
-        let t = "<table><tr>";
-        Object.keys(Cdata[0]).forEach(k => t += `<th>${k}</th>`);
-        t += "</tr>";
+          <div class="detail-section">
+            <div class="section-title">Maintenance Log</div>
+            <p>${item["Maintenance Log"] || "Tidak ada data"}</p>
+          </div>
 
-        Cdata.forEach(r => {
-          t += "<tr>";
-          Object.keys(r).forEach(k => {
-            let val = r[k];
-            if (k.toLowerCase().includes("document") && val.startsWith("http"))
-              val = `<a href="${val}" target="_blank">Lampiran File</a>`;
-            t += `<td>${val}</td>`;
-          });
-          t += "</tr>";
-        });
+          <div class="detail-section">
+            <div class="section-title">Calibration Log</div>
+            <p>${item["Calibration Log"] || "Tidak ada data"}</p>
+          </div>
+        `;
 
-        t += "</table>";
-        LC.innerHTML = t;
+        // Generate QR
+        generateQRCode(serialNumber);
+
+      } catch (err) {
+        container.innerHTML = `<p class="not-found">Gagal memuat data.</p>`;
       }
     }
 
-    loadData();
+    init();
   </script>
-
 </body>
 </html>
