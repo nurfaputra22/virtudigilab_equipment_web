@@ -23,10 +23,9 @@ function csvToParsed(csvText) {
     const char = csvText[i];
 
     if (char === '"') {
-      // handle escaped quotes ("")
       if (csvText[i + 1] === '"') {
         current += '"';
-        i++; // skip second quote
+        i++;
       } else {
         insideQuote = !insideQuote;
       }
@@ -34,21 +33,18 @@ function csvToParsed(csvText) {
       row.push(current.trim());
       current = "";
     } else if ((char === "\n" || char === "\r") && !insideQuote) {
-      // end of row (handle CRLF)
-      // push only if row has something or current not empty (avoid extra empty rows)
       if (current !== "" || row.length > 0) {
         row.push(current.trim());
         rows.push(row);
         row = [];
         current = "";
       }
-      if (char === "\r" && csvText[i + 1] === "\n") i++; // skip LF after CR
+      if (char === "\r" && csvText[i + 1] === "\n") i++;
     } else {
       current += char;
     }
   }
 
-  // last cell
   if (current !== "" || row.length > 0) {
     row.push(current.trim());
     rows.push(row);
@@ -88,19 +84,16 @@ function isAttachmentColumnName(colName) {
   const n = colName.toLowerCase();
   return (
     n.includes("document") ||
-    n.includes("doc") ||
     n.includes("file") ||
     n.includes("lampiran") ||
     n.includes("link") ||
-    n.includes("url") ||
-    n.includes("sertifikat")
+    n.includes("url")
   );
 }
 
 function makeAttachmentCell(url) {
   if (!url) return "-";
-  const href = url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
-  // show short label that opens the URL
+  const href = url.startsWith("http") ? url : `https://${url}`;
   return `<a href="${href}" target="_blank" rel="noopener noreferrer">Lampiran File</a>`;
 }
 
@@ -123,13 +116,14 @@ async function loadAssets() {
 
     const serialCol = findSerialColumnFromHeaders(headers);
     const descCol = headers.find((h) => (h || "").toLowerCase().includes("description")) || headers[0];
-    const locationCol = headers.find((h) => (h || "").toLowerCase().includes("location")) || headers[2] || headers[0];
+    const locationCol =
+      headers.find((h) => (h || "").toLowerCase().includes("location")) || headers[2] || headers[0];
 
     tbody.innerHTML = "";
 
     data.forEach((item, index) => {
       const serial = item[serialCol] || "";
-      if (!serial || serial.trim() === "") return;
+      if (!serial.trim()) return;
 
       const row = `
         <tr>
@@ -137,17 +131,13 @@ async function loadAssets() {
           <td>${serial}</td>
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
-          <td>
-            <a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">Lihat</a>
-          </td>
+          <td><a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">Lihat</a></td>
         </tr>
       `;
       tbody.insertAdjacentHTML("beforeend", row);
     });
   } catch (err) {
-    console.error("Error load assets:", err);
-    const tbodyEl = document.getElementById("assetGrid");
-    if (tbodyEl) tbodyEl.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
   }
 }
 
@@ -159,7 +149,6 @@ async function loadDetailPage() {
   const serialParam = urlParams.get("serial");
   if (!serialParam) return;
 
-  // load parsed CSVs
   const [nrcParsed, mParsed, cParsed] = await Promise.all([
     loadCSVParsed(NRC_URL),
     loadCSVParsed(LOG_M_URL),
@@ -168,41 +157,31 @@ async function loadDetailPage() {
 
   const nrc = nrcParsed.objects;
   const nrcHeaders = nrcParsed.headers;
-  const mHeaders = mParsed.headers;
-  const mObjects = mParsed.objects;
-  const cHeaders = cParsed.headers;
-  const cObjects = cParsed.objects;
 
-  const serialCol = findSerialColumnFromHeaders(nrcHeaders);
-  if (!serialCol) {
-    document.getElementById("data-container").innerHTML = "<p class='notfound'>Kolom serial tidak ditemukan.</p>";
-    return;
-  }
+  const item = nrc.find(
+    (r) => (r[findSerialColumnFromHeaders(nrcHeaders)] || "").trim() === serialParam.trim()
+  );
 
-  // find item in NRC
-  const item = nrc.find((r) => (r[serialCol] || "").trim() === serialParam.trim());
   const container = document.getElementById("data-container");
 
   if (!item) {
     container.innerHTML = `<p class="notfound">Data tidak ditemukan untuk Serial: ${serialParam}</p>`;
   } else {
-    // build detail table, skip document-like columns so we don't show long URLs here
     let html = "<table>";
     let qrInserted = false;
 
     for (const key of nrcHeaders) {
-      if (isAttachmentColumnName(key)) continue; // skip Document column(s)
+      if (isAttachmentColumnName(key)) continue;
+
       const val = item[key] || "";
       html += `<tr><th>${key}</th><td>${val}</td></tr>`;
 
-      // insert QR right after Place Type
       if (!qrInserted && key.toLowerCase().includes("place type")) {
         html += `
           <tr>
             <th>QR Code</th>
-            <td class="qr-cell"><div id="qr-code-cell"></div></td>
-          </tr>
-        `;
+            <td><div id="qr-code-cell"></div></td>
+          </tr>`;
         qrInserted = true;
       }
     }
@@ -210,106 +189,77 @@ async function loadDetailPage() {
     html += "</table>";
     container.innerHTML = html;
 
-    // generate QR
     const qrCell = document.getElementById("qr-code-cell");
     if (qrCell) {
-      if (window.QRCodeStyling) {
-        const qr = new QRCodeStyling({
-          width: 160,
-          height: 160,
-          data: window.location.href,
-          dotsOptions: { color: "#000", type: "rounded" },
-          backgroundOptions: { color: "#fff" },
-        });
-        qr.append(qrCell);
-      } else if (window.QRCode) {
-        new QRCode(qrCell, { text: window.location.href, width: 160, height: 160 });
-      } else {
-        qrCell.innerText = serialParam;
-      }
+      new QRCode(qrCell, { text: window.location.href, width: 160, height: 160 });
     }
   }
 
-  // ---------- Log Maintenance ----------
+  // ======================
+  // LOG MAINTENANCE
+  // ======================
   const logMContainer = document.getElementById("log-maintenance");
-  if (!mObjects || mObjects.length === 0) {
+  const mHeaders = mParsed.headers;
+  const matchedM = mParsed.objects.filter(
+    (r) => (r[findSerialColumnFromHeaders(mHeaders)] || "").trim() === serialParam.trim()
+  );
+
+  if (matchedM.length === 0) {
     logMContainer.innerHTML = "Tidak ada data.";
   } else {
-    const serialColM = findSerialColumnFromHeaders(mHeaders);
-    const matchedM = mObjects.filter((r) => (r[serialColM] || "").trim() === serialParam.trim());
-    if (matchedM.length === 0) {
-      logMContainer.innerHTML = "Tidak ada data.";
-    } else {
-      // build header row, map any attachment-like header to "Lampiran File"
-      let headerHtml = "<table><tr>";
-      for (const h of mHeaders) {
-        if (isAttachmentColumnName(h)) headerHtml += `<th>Lampiran File</th>`;
-        else headerHtml += `<th>${h}</th>`;
-      }
-      headerHtml += "</tr>";
+    let html = "<table><tr>";
+    mHeaders.forEach((h) =>
+      html += `<th>${isAttachmentColumnName(h) ? "Lampiran File" : h}</th>`
+    );
+    html += "</tr>";
 
-      // build body rows
-      let bodyHtml = "";
-      matchedM.forEach((rowObj) => {
-        bodyHtml += "<tr>";
-        for (const h of mHeaders) {
-          const cellVal = rowObj[h] || "";
-          if (isAttachmentColumnName(h)) {
-            bodyHtml += `<td>${cellVal ? makeAttachmentCell(cellVal) : "-"}</td>`;
-          } else {
-            bodyHtml += `<td>${cellVal}</td>`;
-          }
-        }
-        bodyHtml += "</tr>";
+    matchedM.forEach((row) => {
+      html += "<tr>";
+      mHeaders.forEach((h) => {
+        const cell = row[h] || "";
+        html += `<td>${isAttachmentColumnName(h) ? makeAttachmentCell(cell) : cell}</td>`;
       });
+      html += "</tr>";
+    });
 
-      headerHtml += bodyHtml + "</table>";
-      logMContainer.innerHTML = headerHtml;
-    }
+    html += "</table>";
+    logMContainer.innerHTML = html;
   }
 
-  // ---------- Log Calibration ----------
+  // ======================
+  // LOG CALIBRATION
+  // ======================
   const logCContainer = document.getElementById("log-calibration");
-  if (!cObjects || cObjects.length === 0) {
+  const cHeaders = cParsed.headers;
+  const matchedC = cParsed.objects.filter(
+    (r) => (r[findSerialColumnFromHeaders(cHeaders)] || "").trim() === serialParam.trim()
+  );
+
+  if (matchedC.length === 0) {
     logCContainer.innerHTML = "Tidak ada data.";
   } else {
-    const serialColC = findSerialColumnFromHeaders(cHeaders);
-    const matchedC = cObjects.filter((r) => (r[serialColC] || "").trim() === serialParam.trim());
-    if (matchedC.length === 0) {
-      logCContainer.innerHTML = "Tidak ada data.";
-    } else {
-      let headerHtml = "<table><tr>";
-      for (const h of cHeaders) {
-        if (isAttachmentColumnName(h)) headerHtml += `<th>Lampiran File</th>`;
-        else headerHtml += `<th>${h}</th>`;
-      }
-      headerHtml += "</tr>";
+    let html = "<table><tr>";
+    cHeaders.forEach((h) =>
+      html += `<th>${isAttachmentColumnName(h) ? "Lampiran File" : h}</th>`
+    );
+    html += "</tr>";
 
-      let bodyHtml = "";
-      matchedC.forEach((rowObj) => {
-        bodyHtml += "<tr>";
-        for (const h of cHeaders) {
-          const cellVal = rowObj[h] || "";
-          if (isAttachmentColumnName(h)) {
-            bodyHtml += `<td>${cellVal ? makeAttachmentCell(cellVal) : "-"}</td>`;
-          } else {
-            bodyHtml += `<td>${cellVal}</td>`;
-          }
-        }
-        bodyHtml += "</tr>";
+    matchedC.forEach((row) => {
+      html += "<tr>";
+      cHeaders.forEach((h) => {
+        const cell = row[h] || "";
+        html += `<td>${isAttachmentColumnName(h) ? makeAttachmentCell(cell) : cell}</td>`;
       });
+      html += "</tr>";
+    });
 
-      headerHtml += bodyHtml + "</table>";
-      logCContainer.innerHTML = headerHtml;
-    }
+    html += "</table>";
+    logCContainer.innerHTML = html;
   }
 }
 
-// run appropriate parts
-if (document.getElementById("assetGrid")) {
-  loadAssets();
-}
-
-if (document.getElementById("data-container")) {
-  loadDetailPage();
-}
+// =========================
+// RUN
+// =========================
+if (document.getElementById("assetGrid")) loadAssets();
+if (document.getElementById("data-container")) loadDetailPage();
