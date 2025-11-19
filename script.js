@@ -11,6 +11,7 @@ const LOG_C_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
 
+
 // =========================
 // CSV PARSER (robust)
 // =========================
@@ -67,11 +68,13 @@ function csvToParsed(csvText) {
   return { headers, rows: dataRows, objects };
 }
 
+
 async function loadCSVParsed(url) {
   const res = await fetch(url);
   const txt = await res.text();
   return csvToParsed(txt);
 }
+
 
 
 // =========================
@@ -89,12 +92,13 @@ function makeDocumentLink(url) {
     url.startsWith("http://") || url.startsWith("https://")
       ? url
       : `https://${url}`;
-  return `<a href="${valid}" target="_blank" rel="noopener noreferrer">Document</a>`;
+  return `<a href="${valid}" target="_blank" rel="noopener noreferrer">Lampiran File</a>`;
 }
 
 
+
 // =========================
-// index.html: loadAssets
+// index.html: loadAssets()
 // =========================
 async function loadAssets() {
   const tbody = document.getElementById("assetGrid");
@@ -114,6 +118,7 @@ async function loadAssets() {
     const descCol =
       headers.find((h) => (h || "").toLowerCase().includes("description")) ||
       headers[0];
+
     const locationCol =
       headers.find((h) => (h || "").toLowerCase().includes("location")) ||
       headers[2] ||
@@ -122,42 +127,48 @@ async function loadAssets() {
     tbody.innerHTML = "";
 
     let no = 1;
-      data.forEach((item) => {
-    const serial = item[serialCol] || "";
-    if (!serial) return;
 
-    const row = `
-          <tr>
+    data.forEach((item, index) => {
+      const serial = item[serialCol] || "";
+      if (!serial) return;
+
+      const row = `
+        <tr>
           <td>${no++}</td>
 
           <td>
-              <a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">
+            <a href="detail.html?serial=${encodeURIComponent(serial)}" target="_blank">
               ${serial}
-              </a>
+            </a>
           </td>
 
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
+
           <td><div class="qr-${index}"></div></td>
         </tr>
       `;
 
       tbody.insertAdjacentHTML("beforeend", row);
-        // Generate QR Code untuk daftar alat
+
+      // QR CODE SAMA DENGAN QR DI DETAIL PAGE
       new QRCode(document.querySelector(`.qr-${index}`), {
         text: `detail.html?serial=${encodeURIComponent(serial)}`,
         width: 80,
-        height: 80
-        });
+        height: 80,
+      });
     });
+
   } catch (err) {
+    console.error(err);
     tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
   }
 }
 
 
+
 // =========================
-// detail.html: loadDetailPage
+// detail.html: loadDetailPage()
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -213,11 +224,16 @@ async function loadDetailPage() {
   html += "</table>";
   container.innerHTML = html;
 
-  // QR generation
+  // Buat QR detail page (sama format dengan menu utama)
   const qrCell = document.getElementById("qr-code-cell");
   if (qrCell) {
-    new QRCode(qrCell, { text: window.location.href, width: 160, height: 160 });
+    new QRCode(qrCell, {
+      text: `detail.html?serial=${encodeURIComponent(serialParam)}`,
+      width: 160,
+      height: 160,
+    });
   }
+
 
   // ===========================
   // LOG MAINTENANCE
@@ -252,6 +268,7 @@ async function loadDetailPage() {
 
     logMContainer.innerHTML = headerHtml + bodyHtml + "</table>";
   }
+
 
   // ===========================
   // LOG CALIBRATION
@@ -289,11 +306,9 @@ async function loadDetailPage() {
 }
 
 
+
 // =========================
 // RUN
 // =========================
 if (document.getElementById("assetGrid")) loadAssets();
 if (document.getElementById("data-container")) loadDetailPage();
-
-
-
