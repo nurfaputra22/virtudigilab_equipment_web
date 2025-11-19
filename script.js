@@ -93,8 +93,9 @@ function makeDocumentLink(url) {
 }
 
 
+
 // =========================
-// index.html: loadAssets()
+// INDEX.HTML — loadAssets()
 // =========================
 async function loadAssets() {
   const tbody = document.getElementById("assetGrid");
@@ -124,13 +125,9 @@ async function loadAssets() {
 
     let no = 1;
 
-    // --- URL ABSOLUT BASE ---
+    // Base path absolute untuk GitHub Pages
     const basePath =
-      window.location.origin +
-      window.location.pathname.substring(
-        0,
-        window.location.pathname.lastIndexOf("/") + 1
-      );
+      "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
     data.forEach((item, index) => {
       const serial = item[serialCol] || "";
@@ -142,23 +139,16 @@ async function loadAssets() {
       const row = `
         <tr>
           <td>${no++}</td>
-
-          <td>
-            <a href="${detailUrl}" target="_blank">${serial}</a>
-          </td>
-
+          <td><a href="${detailUrl}" target="_blank">${serial}</a></td>
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
-
           <td><div class="qr-${index}"></div></td>
         </tr>
       `;
 
       tbody.insertAdjacentHTML("beforeend", row);
 
-      // ===========================
-      // QR CODE (URL ABSOLUT)
-      // ===========================
+      // QR Code menu utama
       new QRCode(document.querySelector(`.qr-${index}`), {
         text: detailUrl,
         width: 80,
@@ -174,7 +164,7 @@ async function loadAssets() {
 
 
 // =========================
-// detail.html: loadDetailPage()
+// DETAIL.HTML — loadDetailPage()
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -230,10 +220,14 @@ async function loadDetailPage() {
   html += "</table>";
   container.innerHTML = html;
 
-  // ===========================
-  // QR DETAIL PAGE (URL ABSOLUT)
-  // ===========================
-  const currentUrl = window.location.href;
+
+  // =======================================
+  // FIX QR DETAIL PAGE — Selalu URL Absolut
+  // =======================================
+  const currentUrl =
+    "https://nurfaputra22.github.io/virtudigilab_equipment_web/detail.html?serial=" +
+    encodeURIComponent(serialParam);
+
   const qrCell = document.getElementById("qr-code-cell");
 
   if (qrCell) {
@@ -245,9 +239,9 @@ async function loadDetailPage() {
   }
 
 
-  // ===========================
+  // =========================
   // LOG MAINTENANCE
-  // ===========================
+  // =========================
   const logMContainer = document.getElementById("log-maintenance");
   const serialColM = findSerialColumnFromHeaders(mHeaders);
   const matchedM = mObjects.filter(
@@ -280,9 +274,9 @@ async function loadDetailPage() {
   }
 
 
-  // ===========================
+  // =========================
   // LOG CALIBRATION
-  // ===========================
+  // =========================
   const logCContainer = document.getElementById("log-calibration");
   const serialColC = findSerialColumnFromHeaders(cHeaders);
   const matchedC = cObjects.filter(
