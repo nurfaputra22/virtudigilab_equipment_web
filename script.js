@@ -121,13 +121,15 @@ async function loadAssets() {
 
     tbody.innerHTML = "";
 
-    data.forEach((item, index) => {
-      const serial = item[serialCol] || "";
-      if (!serial) return;
+    let no = 1;
+      data.forEach((item) => {
+    const serial = item[serialCol] || "";
+    if (!serial) return;
 
-      const row = `
-        <tr>
-          <td>${index + 1}</td>
+    const row = `
+          <tr>
+          <td>${no++}</td>
+
           <td>${serial}</td>
           <td>${item[descCol] || ""}</td>
           <td>${item[locationCol] || ""}</td>
@@ -283,3 +285,4 @@ async function loadDetailPage() {
 // =========================
 if (document.getElementById("assetGrid")) loadAssets();
 if (document.getElementById("data-container")) loadDetailPage();
+
