@@ -38,21 +38,28 @@ main {
   padding: 30px;
 }
 
-/* ===========================
-   FILTER CONTROLS
-=========================== */
-.controls {
+/* ===============================
+   SEARCH & FILTER AREA (CENTERED)
+=============================== */
+.search-filter-container {
   display: flex;
-  gap: 10px;
-  margin: 15px 0;
+  justify-content: center;  /* MEMBUAT TENGAH */
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap; /* Supaya responsif */
 }
 
-.controls input,
-.controls select {
-  padding: 8px;
-  font-size: 14px;
+.search-filter-container input,
+.search-filter-container select {
+  padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
+  font-size: 14px;
+}
+
+.search-filter-container select {
+  background: #fff;
 }
 
 /* ===========================
