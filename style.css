@@ -35,49 +35,55 @@ h1 {
    MAIN CONTENT
 =========================== */
 main {
-  padding: 30px;
+  padding: 25px 20px;
 }
 
 /* ===============================
-   SEARCH & FILTER AREA (CENTERED)
+   SEARCH & FILTER (CENTERED)
 =============================== */
 .search-filter-container {
+  width: 100%;
+  max-width: 600px;           /* Membuat area tidak melebar */
+  margin: 0 auto 20px auto;   /* AUTO untuk center */
   display: flex;
-  justify-content: center;  /* MEMBUAT TENGAH */
+  justify-content: center;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
-  flex-wrap: wrap; /* Supaya responsif */
+  flex-wrap: wrap;
 }
 
 .search-filter-container input,
 .search-filter-container select {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
+  width: 230px;               /* Lebar konsisten */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .search-filter-container select {
-  background: #fff;
+  background: white;
 }
 
 /* ===========================
-   TABLE LAYOUT
+   TABLE WRAPPER
 =========================== */
 .table-container {
   overflow-x: auto;
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   padding: 20px;
 }
 
+/* ===========================
+   TABLE STYLE
+=========================== */
 table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
-  table-layout: fixed; /* PENTING supaya tabel tidak melar */
+  table-layout: fixed;
 }
 
 thead {
@@ -86,39 +92,19 @@ thead {
 }
 
 th, td {
-  padding: 6px 10px; /* diperkecil supaya tabel tidak melebar */
+  padding: 8px 10px;
   border-bottom: 1px solid #e2e8f0;
-  vertical-align: middle;
+  font-size: 14px;
 }
 
 /* ===========================
-   COLUMN WIDTH CONTROL
+   COLUMN WIDTHS
 =========================== */
-th:nth-child(1),
-td:nth-child(1) {
-  width: 50px;     /* No */
-}
-
-th:nth-child(2),
-td:nth-child(2) {
-  width: 150px;    /* Serial Number */
-  word-break: break-all;
-}
-
-th:nth-child(3),
-td:nth-child(3) {
-  width: 200px;    /* Asset Description */
-}
-
-th:nth-child(4),
-td:nth-child(4) {
-  width: 120px;    /* Location */
-}
-
-th:nth-child(5),
-td:nth-child(5) {
-  width: 90px;     /* QR Code */
-}
+th:nth-child(1), td:nth-child(1) { width: 50px; }
+th:nth-child(2), td:nth-child(2) { width: 150px; word-break: break-all; }
+th:nth-child(3), td:nth-child(3) { width: 200px; }
+th:nth-child(4), td:nth-child(4) { width: 120px; }
+th:nth-child(5), td:nth-child(5) { width: 90px; }
 
 /* ===========================
    LINKS
@@ -133,24 +119,16 @@ td a:hover {
   text-decoration: underline;
 }
 
-/* QR code image size */
+/* QR Images */
 td img.qr {
   display: block;
   margin: auto;
-  max-width: 60px;  /* diperkecil */
-  height: auto;
+  max-width: 60px;
 }
 
-/* Row hover effect */
+/* Hover */
 tbody tr:hover {
-  background-color: #f1f5f9;
-}
-
-/* Loading text */
-.loading {
-  text-align: center;
-  font-style: italic;
-  color: #666;
+  background: #f1f5f9;
 }
 
 /* ===========================
@@ -179,10 +157,20 @@ footer {
 
   th, td {
     font-size: 0.85em;
-    padding: 5px 6px;
+    padding: 6px 6px;
   }
 
   td img.qr {
     max-width: 45px;
+  }
+
+  .search-filter-container input,
+  .search-filter-container select {
+    width: 100%;   /* Full width di HP */
+  }
+
+  .search-filter-container {
+    max-width: 100%;
+    padding: 0 10px;
   }
 }
