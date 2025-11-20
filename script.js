@@ -92,10 +92,13 @@ function makeDocumentLink(url) {
 
 
 // =========================
-// INDEX.HTML
+// INDEX.HTML + Search + Filter
 // =========================
 async function loadAssets() {
   const tbody = document.getElementById("assetGrid");
+  const searchInput = document.getElementById("searchInput");
+  const locationFilter = document.getElementById("locationFilter");
+
   if (!tbody) return;
 
   try {
@@ -117,34 +120,76 @@ async function loadAssets() {
       headers.find((h) => h.toLowerCase().includes("location")) ||
       headers[2];
 
-    tbody.innerHTML = "";
-    let no = 1;
+    // ========== Populate LOCATION dropdown ==========
+    const uniqueLoc = [...new Set(data.map((d) => d[locationCol]))]
+      .filter((x) => x && x.trim() !== "")
+      .sort();
 
-    data.forEach((item, index) => {
-      const serial = item[serialCol];
-      if (!serial) return;
-
-      const detailUrl =
-        BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
-
-      const row = `
-        <tr>
-          <td>${no++}</td>
-          <td><a href="${detailUrl}" target="_blank">${serial}</a></td>
-          <td>${item[descCol] || ""}</td>
-          <td>${item[locationCol] || ""}</td>
-          <td><div class="qr-${index}"></div></td>
-        </tr>
-      `;
-
-      tbody.insertAdjacentHTML("beforeend", row);
-
-      new QRCode(document.querySelector(`.qr-${index}`), {
-        text: detailUrl,
-        width: 80,
-        height: 80,
-      });
+    uniqueLoc.forEach((loc) => {
+      const opt = document.createElement("option");
+      opt.value = loc;
+      opt.textContent = loc;
+      locationFilter.appendChild(opt);
     });
+
+    // ========== Fungsi render tabel ==========
+    function renderTable(filteredData) {
+      tbody.innerHTML = "";
+      let no = 1;
+
+      filteredData.forEach((item, index) => {
+        const serial = item[serialCol];
+        if (!serial) return;
+
+        const detailUrl =
+          BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
+
+        const row = `
+          <tr>
+            <td>${no++}</td>
+            <td><a href="${detailUrl}" target="_blank">${serial}</a></td>
+            <td>${item[descCol] || ""}</td>
+            <td>${item[locationCol] || ""}</td>
+            <td><div class="qr-${index}"></div></td>
+          </tr>
+        `;
+
+        tbody.insertAdjacentHTML("beforeend", row);
+
+        new QRCode(document.querySelector(`.qr-${index}`), {
+          text: detailUrl,
+          width: 80,
+          height: 80,
+        });
+      });
+    }
+
+    // ========== Fungsi filter ==========
+    function applyFilters() {
+      const keyword = searchInput.value.toLowerCase();
+      const selectedLocation = locationFilter.value;
+
+      const filtered = data.filter((item) => {
+        const matchSearch =
+          (item[serialCol] || "").toLowerCase().includes(keyword) ||
+          (item[descCol] || "").toLowerCase().includes(keyword) ||
+          (item[locationCol] || "").toLowerCase().includes(keyword);
+
+        const matchLocation =
+          selectedLocation === "" || item[locationCol] === selectedLocation;
+
+        return matchSearch && matchLocation;
+      });
+
+      renderTable(filtered);
+    }
+
+    // Event listener
+    searchInput.addEventListener("input", applyFilters);
+    locationFilter.addEventListener("change", applyFilters);
+
+    // Render awal
+    renderTable(data);
 
   } catch (err) {
     console.error(err);
