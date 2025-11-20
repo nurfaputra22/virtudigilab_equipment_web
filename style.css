@@ -1,3 +1,6 @@
+/* =========================
+   GLOBAL
+========================= */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: #f8fafc;
@@ -5,167 +8,10 @@ body {
   color: #333;
   text-align: center;
 }
-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  background: #0078d7;
-  color: white;
-  padding: 10px 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-header .logo {
-  height: 50px;
-}
-h1 {
-  font-size: 1.5em;
-}
-main {
-  padding: 20px;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-.card {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 15px;
-}
-.card h3 {
-  color: #0078d7;
-}
-.card .btn {
-  display: inline-block;
-  background: #0078d7;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 0.9em;
-}
-.card .btn:hover {
-  background: #005fa3;
-}
-table {
-  margin: auto;
-  border-collapse: collapse;
-}
-td {
-  padding: 6px 10px;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-}
-footer {
-  margin-top: 20px;
-  color: #555;
-  font-size: 0.9em;
-}
-.home-btn {
-  color: white;
-  text-decoration: none;
-  background: #005fa3;
-  padding: 5px 10px;
-  border-radius: 5px;
-  position: absolute;
-  left: 20px;
-}
-/*CSS untuk Filter */
 
-.controls {
-  display: flex;
-  gap: 10px;
-  margin: 15px 0;
-}
-
-.controls input,
-.controls select {
-  padding: 8px;
-  font-size: 14px;
-}
-
-
-/* --- Tambahan perbaikan layout dan logo --- */
-
-/* Pastikan logo tampil proporsional */
-header .logo {
-  height: 50px;
-  width: auto;
-  object-fit: contain;
-}
-
-/* Pastikan grid rapi dan responsif */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  padding: 10px;
-}
-
-/* Kartu (card) data lebih rapi dan sejajar */
-.card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-  padding: 15px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-/* Judul dalam kartu lebih menonjol */
-.card h3 {
-  margin: 5px 0;
-  color: #0078d7;
-  font-size: 1.1em;
-}
-
-/* QR code agar tidak acak posisinya */
-.card canvas, .card img.qr {
-  display: block;
-  margin: 10px auto 0;
-  max-width: 120px;
-  height: auto;
-}
-
-/* Hindari header spreadsheet muncul di daftar */
-#assetGrid .header-row {
-  display: none;
-}
-
-/* Table di halaman detail */
-table {
-  width: 100%;
-  max-width: 600px;
-  margin: 20px auto;
-  border-collapse: collapse;
-}
-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #ddd;
-  vertical-align: top;
-}
-
-/* Responsive tweaks */
-@media (max-width: 600px) {
-  header {
-    flex-direction: column;
-  }
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: #f8fafc;
-  margin: 0;
-  color: #333;
-}
-
+/* =========================
+   HEADER
+========================= */
 header {
   display: flex;
   align-items: center;
@@ -180,16 +26,41 @@ header {
 header .logo {
   height: 50px;
   width: auto;
+  object-fit: contain;
 }
 
 h1 {
   font-size: 1.5em;
 }
 
+/* =========================
+   FILTER & SEARCH
+========================= */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0 10px;
+}
+
+.controls input,
+.controls select {
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
 main {
   padding: 30px;
 }
 
+/* =========================
+   TABLE WRAPPER
+========================= */
 .table-container {
   overflow-x: auto;
   background: white;
@@ -198,6 +69,9 @@ main {
   padding: 20px;
 }
 
+/* =========================
+   TABLE
+========================= */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -209,7 +83,8 @@ thead {
   color: white;
 }
 
-th, td {
+th,
+td {
   padding: 10px 15px;
   border-bottom: 1px solid #e2e8f0;
   vertical-align: middle;
@@ -241,6 +116,43 @@ td img.qr {
   color: #666;
 }
 
+/* =========================
+   CARD VIEW (untuk layout grid)
+========================= */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  padding: 15px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card h3 {
+  margin: 5px 0;
+  font-size: 1.1em;
+  color: #0078d7;
+}
+
+.card canvas,
+.card img.qr {
+  display: block;
+  margin: 10px auto 0;
+  max-width: 120px;
+}
+
+/* =========================
+   FOOTER
+========================= */
 footer {
   text-align: center;
   margin-top: 30px;
@@ -249,16 +161,25 @@ footer {
   padding: 10px;
 }
 
+/* =========================
+   RESPONSIVE
+========================= */
 @media (max-width: 768px) {
   header {
     flex-direction: column;
     text-align: center;
   }
+
   h1 {
     font-size: 1.2em;
   }
-  th, td {
+
+  th,
+  td {
     font-size: 0.9em;
   }
-}
 
+  .controls {
+    flex-direction: column;
+  }
+}
