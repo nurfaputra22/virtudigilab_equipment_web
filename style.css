@@ -213,3 +213,56 @@ footer {
     max-width: 260px;
   }
 }
+
+/* ==========================================================
+   DETAIL TABLE — MODERN CLEAN STYLE
+   (Ditambahkan tanpa mengubah kode sebelumnya)
+========================================================== */
+.detail-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+.detail-table th,
+.detail-table td {
+  padding: 14px 18px;
+  font-size: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Kolom kiri (label field) */
+.detail-table th {
+  background: #f3f6fa;
+  font-weight: 600;
+  color: #374151;
+  width: 260px;
+}
+
+/* Baris terakhir */
+.detail-table tr:last-child td,
+.detail-table tr:last-child th {
+  border-bottom: none;
+}
+
+/* Hover effect */
+.detail-table tr:hover td,
+.detail-table tr:hover th {
+  background: #f9fafb;
+  transition: 0.25s ease;
+}
+
+/* QR Code khusus agar center */
+.detail-table .qr-cell {
+  text-align: center;
+  padding: 25px;
+}
+
+.detail-table .qr-cell img {
+  max-width: 150px;
+  height: auto;
+}
