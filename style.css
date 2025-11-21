@@ -57,7 +57,7 @@ main {
 .search-filter-container input,
 .search-filter-container select {
   padding: 9px 14px;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
   background: white;
