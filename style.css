@@ -33,187 +33,15 @@ h1 {
 }
 
 /* ===========================
-   MAIN CONTENT
+   MAIN
 =========================== */
 main {
   padding: 30px;
 }
 
-/* ======================================================
-   SEARCH & FILTER AREA — FIXED CENTERED
-====================================================== */
-search-filter-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin: 0 auto 20px auto;
-  text-align: center;
-  flex-wrap: wrap;
-}
-
-.search-filter-container input,
-.search-filter-container select {
-  padding: 9px 14px;
-  border: 2px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-  width: 220px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  transition: 0.2s ease;
-}
-
-.search-filter-container input:focus,
-.search-filter-container select:focus {
-  border-color: #0078d7;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0,120,215,0.25);
-}
-
 /* ===========================
-   TABLE CONTAINER
+   DETAIL PAGE
 =========================== */
-.table-container {
-  overflow-x: auto;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-  padding: 20px;
-}
-
-/* ===========================
-   TABLE
-=========================== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  table-layout: fixed;
-}
-
-thead {
-  background: #0078d7;
-  color: white;
-}
-
-th, td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #e2e8f0;
-  vertical-align: middle;
-  font-size: 14px;
-}
-
-/* ===========================
-   COLUMN WIDTH CONTROL
-=========================== */
-th:nth-child(1), td:nth-child(1) {
-  width: 50px;
-  text-align: center;
-}
-
-th:nth-child(2), td:nth-child(2) {
-  width: 150px;
-  word-break: break-all;
-}
-
-th:nth-child(3), td:nth-child(3) {
-  width: 240px;
-}
-
-th:nth-child(4), td:nth-child(4) {
-  width: 140px;
-}
-
-th:nth-child(5), td:nth-child(5) {
-  width: 90px;
-  text-align: center;
-}
-
-/* ===========================
-   LINKS
-=========================== */
-td a {
-  color: #0078d7;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-td a:hover {
-  text-decoration: underline;
-}
-
-/* ===========================
-   QR CODE IMAGE
-=========================== */
-td img.qr {
-  display: block;
-  margin: auto;
-  max-width: 60px;
-  height: auto;
-}
-
-/* ===========================
-   ROW HOVER
-=========================== */
-tbody tr:hover {
-  background-color: #f1f5f9;
-}
-
-/* ===========================
-   LOADING TEXT
-=========================== */
-.loading {
-  text-align: center;
-  font-style: italic;
-  color: #666;
-  padding: 12px;
-}
-
-/* ===========================
-   FOOTER
-=========================== */
-footer {
-  text-align: center;
-  margin-top: 35px;
-  color: #555;
-  font-size: 0.9em;
-  padding: 10px;
-}
-
-/* ===========================
-   RESPONSIVE
-=========================== */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  h1 {
-    font-size: 1.3em;
-  }
-
-  th, td {
-    font-size: 12px;
-    padding: 6px;
-  }
-
-  td img.qr {
-    max-width: 45px;
-  }
-
-  .search-filter-container input,
-  .search-filter-container select {
-    width: 100%;
-    max-width: 260px;
-  }
-}
-
-/* ==========================================================
-   DETAIL TABLE — MODERN CLEAN STYLE (TOP PART)
-========================================================== */
 .detail-card {
   background: #fff;
   padding: 25px;
@@ -229,6 +57,7 @@ footer {
   color: #1e293b;
 }
 
+/* === DETAIL TABLE === */
 .detail-table {
   width: 100%;
   border-collapse: separate;
@@ -250,7 +79,7 @@ footer {
   background: #f3f6fa;
   font-weight: 600;
   color: #374151;
-  width: 220px;    /* paksa berlaku */
+  width: 220px !important;
 }
 
 .detail-table tr:last-child td,
@@ -264,9 +93,7 @@ footer {
   transition: 0.25s ease;
 }
 
-/* ==========================================================
-   QR CODE SECTION — BAWAH SENDIRI
-========================================================== */
+/* === QR CODE SECTION === */
 .qr-box {
   text-align: center;
   margin-top: 25px;
@@ -282,4 +109,52 @@ footer {
 #qrcode img {
   width: 160px;
   height: 160px;
+}
+
+/* ===========================
+   LOG TABLES
+=========================== */
+#log-maintenance table,
+#log-calibration table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#log-maintenance th,
+#log-calibration th {
+  background: #e2e8f0;
+  padding: 10px;
+  font-weight: 600;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+#log-maintenance td,
+#log-calibration td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ===========================
+   FOOTER
+=========================== */
+footer {
+  text-align: center;
+  margin-top: 35px;
+  color: #555;
+  font-size: 0.9em;
+  padding: 10px;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
 }
