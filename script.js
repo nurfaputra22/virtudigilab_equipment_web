@@ -81,7 +81,7 @@ const findSerialColumnFromHeaders = (h) =>
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
-  const sn = urlParams.get("sn");
+  const sn = String(urlParams.get("sn") || "").trim();
   const loc = urlParams.get("loc");
 
   if (!sn || !loc || !SHEETS[loc]) {
@@ -92,12 +92,12 @@ async function loadDetailPage() {
 
   const tableBody = document.getElementById("detail-body");
 
-  // Load CSV
+  // Load CSV untuk lokasi
   const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
   const item = parsed.objects.find(
-    (r) => r[serialCol].trim() === sn.trim()
+    (r) => String(r[serialCol]).trim() === sn
   );
 
   if (!item) {
@@ -105,7 +105,7 @@ async function loadDetailPage() {
     return;
   }
 
-  // Render kolom secara urut
+  // Render semua kolom berurutan
   parsed.headers.forEach((key) => {
     tableBody.insertAdjacentHTML(
       "beforeend",
@@ -113,15 +113,17 @@ async function loadDetailPage() {
     );
   });
 
-  // Load Log
+  // Load log maintenance & calibration
   loadLogs(sn);
 }
 
 
 // =========================
-// LOAD LOGS
+// LOAD LOGS (FIXED)
 // =========================
 async function loadLogs(sn) {
+  const snFix = String(sn).trim();
+
   const logM = await loadCSVParsed(LOG_M_URL);
   const logC = await loadCSVParsed(LOG_C_URL);
 
@@ -131,8 +133,13 @@ async function loadLogs(sn) {
   const tableM = document.getElementById("log-maintenance");
   const tableC = document.getElementById("log-calibration");
 
-  const mRows = logM.objects.filter((r) => r[mCol] === sn);
-  const cRows = logC.objects.filter((r) => r[cCol] === sn);
+  const mRows = logM.objects.filter(
+    (r) => String(r[mCol]).trim() === snFix
+  );
+
+  const cRows = logC.objects.filter(
+    (r) => String(r[cCol]).trim() === snFix
+  );
 
   renderLog(tableM, logM.headers, mRows);
   renderLog(tableC, logC.headers, cRows);
@@ -184,12 +191,12 @@ async function loadListPage() {
   // Set judul lokasi
   if (titleEl) titleEl.textContent = "Daftar Alat — " + loc;
 
-  // Load CSV equipment
+  // Load data equipment CSV
   const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
   parsed.objects.forEach((row) => {
-    let serialValue = row[serialCol] || "-";
+    let serialValue = String(row[serialCol] || "-").trim();
 
     tbody.insertAdjacentHTML(
       "beforeend",
