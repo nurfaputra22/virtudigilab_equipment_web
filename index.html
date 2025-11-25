@@ -4,45 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Daftar Alat Laboratorium | Virtu DigiLab</title>
-
   <link rel="stylesheet" href="style.css" />
-
   <style>
-    .logo {
-      height: 60px;
-      margin-right: 10px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 15px;
-    }
-
-    .qr-box {
-      width: 90px;
-      height: 90px;
-      margin: auto;
-    }
+    .logo { height: 60px; margin-right: 10px; }
+    header { display: flex; align-items: center; gap: 15px; padding: 15px; }
+    .qr-box { width: 90px; height: 90px; margin: auto; }
+    .controls { display: flex; gap: 10px; padding: 15px; }
+    .controls input, .controls select { padding: 8px; font-size: 14px; }
+    .table-container { padding: 15px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #f0f0f0; }
+    .loading { text-align: center; }
+    footer { padding: 20px; text-align: center; color: #666; margin-top: 20px; }
   </style>
-
 </head>
 <body>
-
   <header>
-    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png"
-         alt="Virtu DigiLab Logo" class="logo" />
+    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png" alt="Virtu DigiLab Logo" class="logo" />
     <h1>Daftar Alat Laboratorium</h1>
   </header>
-  
-  <div class="controls">
-  <input type="text" id="searchInput" placeholder="Search...." />
 
-  <select id="locationFilter">
-    <option value="">All Location</option>
-  </select>
-</div>
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="Search...." />
+    <select id="locationFilter">
+      <option value="">All Location</option>
+    </select>
+  </div>
 
   <main>
     <div class="table-container">
@@ -56,11 +44,8 @@
             <th>QR Code</th>
           </tr>
         </thead>
-
         <tbody id="assetGrid">
-          <tr>
-            <td colspan="5" class="loading">Memuat data...</td>
-          </tr>
+          <tr><td colspan="5" class="loading">Memuat data...</td></tr>
         </tbody>
       </table>
     </div>
@@ -70,11 +55,7 @@
     &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
   </footer>
 
-  <!-- Library QR Code yg benar untuk daftar utama -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-  <!-- Script utama -->
   <script src="script.js"></script>
-
 </body>
 </html>
