@@ -3,133 +3,216 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detail Alat | Virtu DigiLab</title>
+  <title>Detail Alat</title>
 
-  <!-- STYLE UTAMA -->
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
-    table th {
-      background: #f1f5f9;
-      width: 180px;
-      text-align: left;
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      padding: 20px;
+      background: #f3f4f6;
+      margin: 0;
     }
 
-    .section-title {
-      margin-top: 40px;
-      font-size: 20px;
-      font-weight: bold;
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
     }
 
-    .notfound {
-      color: red;
-      text-align: center;
-      font-weight: bold;
+    h2 {
+      margin-top: 0;
     }
 
-    /* === DETAIL TABLE === */
-    .detail-table {
+    table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      margin-top: 20px;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
-
-    .detail-table th,
-    .detail-table td {
-      border: 2px solid #cbd5e1;
-      padding: 10px 14px;
+    th, td {
+      padding: 12px;
+      border: 1px solid #e2e8f0;
       font-size: 14px;
     }
-
-    .detail-table th {
-      background: #f1f5f9;
-      width: 220px;
-      font-weight: 600;
-    }
-
-    /* === QR BOX === */
-    .qr-box {
-      text-align: center;
-      padding: 15px;
+    th {
+      background: #111827;
+      color: white;
+      font-weight: bold;
     }
 
     #qrcode {
-      margin-top: 10px;
+      margin-top: 15px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 15px;
+      color: #555;
     }
   </style>
 </head>
-
 <body>
 
-  <header>
-    <a href="index.html" class="home-btn">← Kembali</a>
-    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png" class="logo" />
-    <h1>Detail Alat</h1>
-  </header>
+<div class="card">
+  <h2>Informasi Alat</h2>
+  <p><strong>Serial Number:</strong> <span id="snText">Memuat...</span></p>
+  <p><strong>Lokasi:</strong> <span id="locText">Memuat...</span></p>
+  <div id="qrcode"></div>
+</div>
 
-  <main>
+<div class="card">
+  <h2>Detail Alat</h2>
+  <table>
+    <tbody id="detailBody">
+      <tr><td class="loading">Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
 
-    <!-- INFORMASI ALAT -->
-    <h2 class="section-title">Informasi Alat</h2>
+<div class="card">
+  <h2>Log Maintenance</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Kegiatan</th>
+        <th>Teknisi</th>
+      </tr>
+    </thead>
+    <tbody id="maintBody">
+      <tr><td colspan="3" class="loading">Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
 
-    <div id="data-container">
-      <table class="detail-table">
-        <tbody id="detail-body">
-          <!-- SCRIPT.JS yang akan mengisi data -->
-          
-          <!-- BARIS QR CODE -->
+<div class="card">
+  <h2>Log Calibration</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Status</th>
+        <th>Keterangan</th>
+      </tr>
+    </thead>
+    <tbody id="calibBody">
+      <tr><td colspan="3" class="loading">Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const SN = params.get("sn");
+const LOC = params.get("loc");
+
+document.getElementById("snText").textContent = SN || "Tidak ada";
+document.getElementById("locText").textContent = LOC || "Tidak ada";
+
+new QRCode(document.getElementById("qrcode"), {
+  text: window.location.href,
+  width: 120,
+  height: 120,
+});
+
+// ==========================
+// LINK GOOGLE SHEET PER LOKASI
+// ==========================
+const DETAIL_SHEET = {
+  "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
+  "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
+};
+
+function loadDetail() {
+  Papa.parse(DETAIL_SHEET[LOC], {
+    download: true,
+    header: true,
+    complete: function (results) {
+      const row = results.data.find(r => r["Serial Number"] === SN);
+      const tbody = document.getElementById("detailBody");
+      tbody.innerHTML = "";
+
+      if (!row) {
+        tbody.innerHTML = `<tr><td>Data tidak ditemukan</td></tr>`;
+        return;
+      }
+
+      Object.keys(row).forEach(k => {
+        tbody.innerHTML += `
           <tr>
-            <th>QR Code</th>
-            <td>
-              <div class="qr-box">
-                <div id="qrcode"></div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            <th>${k}</th>
+            <td>${row[k] || "-"}</td>
+          </tr>`;
+      });
+    }
+  });
+}
 
-    <!-- LOG MAINTENANCE -->
-    <h2 class="section-title">Log Maintenance</h2>
-    <div id="log-maintenance">Memuat...</div>
+function loadMaintenance() {
+  Papa.parse(`maintenance_${LOC}.csv`, {
+    download: true,
+    header: true,
+    complete: function (results) {
+      const data = results.data.filter(r => r["Serial"] === SN);
+      const tbody = document.getElementById("maintBody");
+      tbody.innerHTML = "";
 
-    <!-- LOG CALIBRATION -->
-    <h2 class="section-title">Log Calibration</h2>
-    <div id="log-calibration">Memuat...</div>
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3">Tidak ada data</td></tr>`;
+        return;
+      }
 
-    <script>
-  // Ambil parameter SN dan LOC
-  const urlParams = new URLSearchParams(window.location.search);
-  const sn = urlParams.get("sn");
-  const loc = urlParams.get("loc");
+      data.forEach(r => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${r["Tanggal"]}</td>
+            <td>${r["Kegiatan"]}</td>
+            <td>${r["Teknisi"]}</td>
+          </tr>`;
+      });
+    }
+  });
+}
 
-  // Generate QR Code untuk halaman detail
-  if (sn && loc) {
-    new QRCode(document.getElementById("qrcode"), {
-      text: `detail.html?sn=${sn}&loc=${loc}`,
-      width: 150,
-      height: 150
-    });
-  }
-  </script>
+function loadCalibration() {
+  Papa.parse(`calibration_${LOC}.csv`, {
+    download: true,
+    header: true,
+    complete: function (results) {
+      const data = results.data.filter(r => r["Serial"] === SN);
+      const tbody = document.getElementById("calibBody");
+      tbody.innerHTML = "";
 
-    
-  </main>
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3">Tidak ada data</td></tr>`;
+        return;
+      }
 
-  <footer>
-    &copy; 2025 Virtu DigiLab
-  </footer>
+      data.forEach(r => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${r["Tanggal"]}</td>
+            <td>${r["Status"]}</td>
+            <td>${r["Keterangan"]}</td>
+          </tr>`;
+      });
+    }
+  });
+}
 
-  <!-- QR CODE LIBRARY -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
-  <!-- SCRIPT UTAMA -->
-  <script src="script.js"></script>
+loadDetail();
+loadMaintenance();
+loadCalibration();
+</script>
 
 </body>
 </html>
