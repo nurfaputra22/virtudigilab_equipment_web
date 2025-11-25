@@ -3,15 +3,17 @@
 // =========================
 const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
-// Data utama dipecah per lokasi
+// Semua lokasi → CSV berbeda
 const SHEETS = {
   "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
-  "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv"
+  "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
+  "26A2": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1522404894&single=true&output=csv"
 };
 
-// Log (tetap sama, tidak berubah)
+// Log maintenance & calibration
 const LOG_M_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
+
 const LOG_C_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
@@ -23,28 +25,28 @@ function csvToParsed(csvText) {
   const rows = [];
   let current = "";
   let row = [];
-  let insideQuote = false;
+  let inside = false;
 
   for (let i = 0; i < csvText.length; i++) {
-    const char = csvText[i];
+    const c = csvText[i];
 
-    if (char === '"') {
+    if (c === '"') {
       if (csvText[i + 1] === '"') {
         current += '"';
         i++;
-      } else insideQuote = !insideQuote;
-    } else if (char === "," && !insideQuote) {
+      } else inside = !inside;
+    } else if (c === "," && !inside) {
       row.push(current.trim());
       current = "";
-    } else if ((char === "\n" || char === "\r") && !insideQuote) {
+    } else if ((c === "\n" || c === "\r") && !inside) {
       if (current !== "" || row.length > 0) {
         row.push(current.trim());
         rows.push(row);
         row = [];
         current = "";
       }
-      if (char === "\r" && csvText[i + 1] === "\n") i++;
-    } else current += char;
+      if (c === "\r" && csvText[i + 1] === "\n") i++;
+    } else current += c;
   }
 
   if (current !== "" || row.length > 0) {
@@ -52,271 +54,182 @@ function csvToParsed(csvText) {
     rows.push(row);
   }
 
-  const cleanRows = rows.filter((r) => r.some((c) => c && c.trim() !== ""));
-  if (!cleanRows.length) return { headers: [], rows: [], objects: [] };
+  const clean = rows.filter((r) => r.some((c) => c.trim() !== ""));
+  const headers = clean[0];
+  const body = clean.slice(1);
 
-  const headers = cleanRows[0].map((h) => (h || "").trim());
-  const dataRows = cleanRows.slice(1);
-
-  const objects = dataRows.map((r) => {
+  const objects = body.map((r) => {
     const obj = {};
-    for (let j = 0; j < headers.length; j++) {
-      obj[headers[j]] = (r[j] || "").trim();
-    }
+    headers.forEach((h, i) => (obj[h] = r[i] || ""));
     return obj;
   });
 
-  return { headers, rows: dataRows, objects };
+  return { headers, objects };
 }
 
 async function loadCSVParsed(url) {
   const res = await fetch(url);
-  const txt = await res.text();
-  return csvToParsed(txt);
+  return csvToParsed(await res.text());
 }
 
-
-// =========================
-// Helpers
-// =========================
-function findSerialColumnFromHeaders(headers) {
-  return headers.find((h) => (h || "").toLowerCase().includes("serial")) || null;
-}
-
-function makeDocumentLink(url) {
-  if (!url) return "-";
-  const valid =
-    url.startsWith("http://") || url.startsWith("https://")
-      ? url
-      : `https://${url}`;
-  return `<a href="${valid}" target="_blank" rel="noopener noreferrer">Lampiran File</a>`;
-}
-
+const findSerialColumnFromHeaders = (h) =>
+  h.find((x) => x.toLowerCase().includes("serial")) || null;
 
 
 // =========================
-// INDEX.HTML — LOAD ASSETS
+// LIST.HTML — LOAD ASSET LIST BY LOCATION
 // =========================
-async function loadAssets() {
-  const tbody = document.getElementById("assetGrid");
-  const searchInput = document.getElementById("searchInput");
-  const locationFilter = document.getElementById("locationFilter");
+async function loadListPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const location = urlParams.get("location");
+  if (!location || !SHEETS[location]) return;
 
-  if (!tbody) return;
+  const tbody = document.getElementById("list-body");
+  const headerTitle = document.getElementById("headerLocation");
+  headerTitle.textContent = location;
 
   try {
-    // Hardcode 2 location
-    const LOCATIONS = ["22A3", "27A6"];
+    const parsed = await loadCSVParsed(SHEETS[location]);
+    const data = parsed.objects;
+    const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
-    // Isi dropdown (manual sesuai permintaan)
-    LOCATIONS.forEach((loc) => {
-      const opt = document.createElement("option");
-      opt.value = loc;
-      opt.textContent = loc;
-      locationFilter.appendChild(opt);
+    tbody.innerHTML = "";
+
+    let no = 1;
+    data.forEach((item, i) => {
+      const serial = item[serialCol];
+      const desc = item["Asset Description"] || item["Description"] || "-";
+
+      const detailURL =
+        BASE_PATH +
+        "detail.html?serial=" +
+        encodeURIComponent(serial) +
+        "&location=" +
+        encodeURIComponent(location);
+
+      const row = `
+        <tr>
+          <td>${no++}</td>
+          <td><a href="${detailURL}">${serial}</a></td>
+          <td>${desc}</td>
+          <td><div class="qr-${i}"></div></td>
+        </tr>`;
+      tbody.insertAdjacentHTML("beforeend", row);
+
+      new QRCode(document.querySelector(`.qr-${i}`), {
+        text: detailURL,
+        width: 70,
+        height: 70,
+      });
     });
-
-    // Load semua sheet
-    const sheetData = {};
-    for (const loc of LOCATIONS) {
-      sheetData[loc] = await loadCSVParsed(SHEETS[loc]);
-    }
-
-    // Render tabel
-    function renderTable(filteredLoc, keyword) {
-      tbody.innerHTML = "";
-
-      if (!filteredLoc) return;
-
-      const parsed = sheetData[filteredLoc];
-      const data = parsed.objects;
-      const headers = parsed.headers;
-
-      const serialCol = findSerialColumnFromHeaders(headers);
-      const descCol =
-        headers.find((h) => h.toLowerCase().includes("description")) ||
-        headers[1];
-
-      let no = 1;
-
-      data
-        .filter((item) => {
-          if (!keyword) return true;
-          const low = keyword.toLowerCase();
-          return (
-            (item[serialCol] || "").toLowerCase().includes(low) ||
-            (item[descCol] || "").toLowerCase().includes(low)
-          );
-        })
-        .forEach((item, index) => {
-          const serial = item[serialCol];
-          const detailUrl =
-            BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
-
-          const row = `
-            <tr>
-              <td>${no++}</td>
-              <td><a href="${detailUrl}" target="_blank">${serial}</a></td>
-              <td>${item[descCol] || ""}</td>
-              <td>${filteredLoc}</td>
-              <td><div class="qr-${index}"></div></td>
-            </tr>
-          `;
-          tbody.insertAdjacentHTML("beforeend", row);
-
-          new QRCode(document.querySelector(`.qr-${index}`), {
-            text: detailUrl,
-            width: 80,
-            height: 80,
-          });
-        });
-    }
-
-    // Event Handler
-    searchInput.addEventListener("input", () =>
-      renderTable(locationFilter.value, searchInput.value)
-    );
-    locationFilter.addEventListener("change", () =>
-      renderTable(locationFilter.value, searchInput.value)
-    );
-
-    // Render awal default ke lokasi pertama
-    renderTable(LOCATIONS[0], "");
-
   } catch (err) {
     console.error(err);
-    tbody.innerHTML = `<tr><td colspan="5">Gagal memuat data.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Gagal memuat data.</td></tr>`;
   }
 }
 
 
-
 // =========================
-// DETAIL.HTML (TIDAK DIUBAH)
+// DETAIL.HTML — LOAD DETAIL ITEM
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
-  const serialParam = urlParams.get("serial");
-  if (!serialParam) return;
+  const serial = urlParams.get("serial");
+  const location = urlParams.get("location");
 
-  const [nrcParsed, mParsed, cParsed] = await Promise.all([
-    loadCSVParsed(SHEETS["22A3"]), // tetap gunakan sheet umum
-    loadCSVParsed(LOG_M_URL),
-    loadCSVParsed(LOG_C_URL),
-  ]);
+  if (!serial || !location) return;
 
-  const nrc = nrcParsed.objects;
-  const headers = nrcParsed.headers;
+  const tableBody = document.getElementById("detail-body");
 
-  const serialCol = findSerialColumnFromHeaders(headers);
-  const container = document.getElementById("data-container");
+  const parsed = await loadCSVParsed(SHEETS[location]);
+  const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
-  const item = nrc.find(
-    (r) => (r[serialCol] || "").trim() === serialParam.trim()
+  const item = parsed.objects.find(
+    (r) => r[serialCol].trim() === serial.trim()
   );
 
   if (!item) {
-    container.innerHTML = `<p>Data tidak ditemukan.</p>`;
+    tableBody.innerHTML = `<tr><td colspan="2">Data tidak ditemukan</td></tr>`;
     return;
   }
 
-  let html = "<table>";
-  let qrInserted = false;
+  // Render semua field
+  parsed.headers.forEach((key) => {
+    tableBody.insertAdjacentHTML(
+      "afterbegin",
+      `<tr><th>${key}</th><td>${item[key] || "-"}</td></tr>`
+    );
+  });
 
-  headers.forEach((key) => {
-    html += `<tr><th>${key}</th><td>${item[key] || ""}</td></tr>`;
+  // QR Code di bawah tabel
+  const finalURL =
+    BASE_PATH +
+    "detail.html?serial=" +
+    encodeURIComponent(serial) +
+    "&location=" +
+    encodeURIComponent(location);
 
-    if (!qrInserted && key.toLowerCase().includes("place")) {
-      html += `
-        <tr>
-          <th>QR Code</th>
-          <td><div id="qr-code-cell"></div></td>
-        </tr>`;
-      qrInserted = true;
-    }
+  new QRCode(document.getElementById("qrcode"), {
+    text: finalURL,
+    width: 180,
+    height: 180,
+  });
+
+  // Load log maintenance & calibration
+  loadLogs(serial);
+}
+
+
+// =========================
+// LOAD LOGS
+// =========================
+async function loadLogs(serial) {
+  const logM = await loadCSVParsed(LOG_M_URL);
+  const logC = await loadCSVParsed(LOG_C_URL);
+
+  const mCol = findSerialColumnFromHeaders(logM.headers);
+  const cCol = findSerialColumnFromHeaders(logC.headers);
+
+  const tableM = document.getElementById("log-maintenance");
+  const tableC = document.getElementById("log-calibration");
+
+  const mRows = logM.objects.filter((r) => r[mCol] === serial);
+  const cRows = logC.objects.filter((r) => r[cCol] === serial);
+
+  renderLog(tableM, logM.headers, mRows);
+  renderLog(tableC, logC.headers, cRows);
+}
+
+function renderLog(container, headers, rows) {
+  if (!rows.length) {
+    container.innerHTML = "Tidak ada data";
+    return;
+  }
+
+  let html = "<table><tr>";
+  headers.forEach((h) => (html += `<th>${h}</th>`));
+  html += "</tr>";
+
+  rows.forEach((r) => {
+    html += "<tr>";
+    headers.forEach((h) => {
+      if (h.toLowerCase() === "document") {
+        const link = r[h]
+          ? `<a href="${r[h]}" target="_blank">File</a>`
+          : "-";
+        html += `<td>${link}</td>`;
+      } else html += `<td>${r[h] || "-"}</td>`;
+    });
+    html += "</tr>";
   });
 
   html += "</table>";
   container.innerHTML = html;
-
-  const finalDetailUrl =
-    BASE_PATH + "detail.html?serial=" + encodeURIComponent(serialParam);
-
-  const qrCell = document.getElementById("qr-code-cell");
-  if (qrCell) {
-    new QRCode(qrCell, {
-      text: finalDetailUrl,
-      width: 160,
-      height: 160,
-    });
-  }
-
-  // Log Maintenance
-  const logMContainer = document.getElementById("log-maintenance");
-  const serialColM = findSerialColumnFromHeaders(mParsed.headers);
-  const matchedM = mParsed.objects.filter(
-    (r) => (r[serialColM] || "").trim() === serialParam
-  );
-
-  if (!matchedM.length) {
-    logMContainer.innerHTML = "Tidak ada data.";
-  } else {
-    let htmlM = "<table><tr>";
-    mParsed.headers.forEach((h) => (htmlM += `<th>${h}</th>`));
-    htmlM += "</tr>";
-
-    matchedM.forEach((obj) => {
-      htmlM += "<tr>";
-      mParsed.headers.forEach((h) => {
-        if (h.toLowerCase() === "document") {
-          htmlM += `<td>${makeDocumentLink(obj[h])}</td>`;
-        } else {
-          htmlM += `<td>${obj[h] || ""}</td>`;
-        }
-      });
-      htmlM += "</tr>";
-    });
-
-    htmlM += "</table>";
-    logMContainer.innerHTML = htmlM;
-  }
-
-  // Log Calibration
-  const logCContainer = document.getElementById("log-calibration");
-  const serialColC = findSerialColumnFromHeaders(cParsed.headers);
-  const matchedC = cParsed.objects.filter(
-    (r) => (r[serialColC] || "").trim() === serialParam
-  );
-
-  if (!matchedC.length) {
-    logCContainer.innerHTML = "Tidak ada data.";
-  } else {
-    let htmlC = "<table><tr>";
-    cParsed.headers.forEach((h) => (htmlC += `<th>${h}</th>`));
-    htmlC += "</tr>";
-
-    matchedC.forEach((obj) => {
-      htmlC += "<tr>";
-      cParsed.headers.forEach((h) => {
-        if (h.toLowerCase() === "document") {
-          htmlC += `<td>${makeDocumentLink(obj[h])}</td>`;
-        } else {
-          htmlC += `<td>${obj[h] || ""}</td>`;
-        }
-      });
-      htmlC += "</tr>";
-    });
-
-    htmlC += "</table>";
-    logCContainer.innerHTML = htmlC;
-  }
 }
 
 
-
 // =========================
-// RUN
+// AUTO RUN
 // =========================
-if (document.getElementById("assetGrid")) loadAssets();
-if (document.getElementById("data-container")) loadDetailPage();
-
+if (document.getElementById("list-body")) loadListPage();
+if (document.getElementById("detail-body")) loadDetailPage();
