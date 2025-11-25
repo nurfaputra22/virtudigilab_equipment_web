@@ -5,9 +5,12 @@ const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
 // Semua lokasi → CSV berbeda
 const SHEETS = {
-  "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
-  "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
-  "26A2": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1522404894&single=true&output=csv"
+  "22A3":
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
+  "27A6":
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
+  "26A2":
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1522404894&single=true&output=csv"
 };
 
 // Log maintenance & calibration
@@ -92,7 +95,6 @@ async function loadDetailPage() {
 
   const tableBody = document.getElementById("detail-body");
 
-  // Load CSV untuk lokasi
   const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
@@ -105,7 +107,6 @@ async function loadDetailPage() {
     return;
   }
 
-  // Render semua kolom berurutan
   parsed.headers.forEach((key) => {
     tableBody.insertAdjacentHTML(
       "beforeend",
@@ -113,13 +114,12 @@ async function loadDetailPage() {
     );
   });
 
-  // Load log maintenance & calibration
   loadLogs(sn);
 }
 
 
 // =========================
-// LOAD LOGS (FIXED)
+// LOAD LOGS
 // =========================
 async function loadLogs(sn) {
   const snFix = String(sn).trim();
@@ -174,7 +174,7 @@ function renderLog(container, headers, rows) {
 
 
 // =========================
-// LIST.HTML — LOAD EQUIPMENT PER LOKASI
+// LIST.HTML — LOAD EQUIPMENT
 // =========================
 async function loadListPage() {
   const params = new URLSearchParams(window.location.search);
@@ -188,27 +188,20 @@ async function loadListPage() {
     return;
   }
 
-  // Set judul lokasi
   if (titleEl) titleEl.textContent = "Daftar Alat — " + loc;
 
-  // Load data equipment CSV
   const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
   parsed.objects.forEach((row) => {
-    let serialValue = String(row[serialCol] || "-").trim();
+    let serialValue = String(row[serialCol] || "").trim();
 
-  // null / undefined → tidak tampil
-      if (!serialValue) return;
+    // RULE FINAL:
+    // ❌ kosong → tidak tampil
+    // ✔ ada isinya → tampil (termasuk "-")
+    if (serialValue === "") return;
 
-  // trim semua spasi
-      serialValue = String(serialValue).trim();
-
-  // benar-benar kosong → skip
-      if (serialValue === "") return;
-
-  // jika ada isinya (termasuk "-") → tampilkan
-      tbody.insertAdjacentHTML(
+    tbody.insertAdjacentHTML(
       "beforeend",
       `
       <tr>
@@ -232,6 +225,3 @@ async function loadListPage() {
 // =========================
 if (document.getElementById("detail-body")) loadDetailPage();
 if (document.getElementById("equipment-body")) loadListPage();
-
-
-
