@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Alat</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #111827;
+      margin-bottom: 25px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 14px;
+      border: 1px solid #d1d5db;
+      text-align: left;
+    }
+
+    th {
+      background: #111827;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1 id="locationTitle">Loading...</h1>
+  <table id="alatTable">
+    <thead>
+      <tr>
+        <th>Nama Alat</th>
+        <th>Serial Number</th>
+        <th>Kondisi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+const SHEETS = {
+  "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLIC7l_yvj3F10m6j5yRRi9Kpr-jDYEFAFXGczQrD8gY0G4sBo-ervRX9ePjBMMnqz15U9EDSo55xm/pub?gid=0&single=true&output=csv",
+  "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv"
+};
+
+const urlParams = new URLSearchParams(window.location.search);
+const location = urlParams.get("location");
+
+document.getElementById("locationTitle").textContent = "Daftar Alat - " + location;
+
+if (!SHEETS[location]) {
+  document.body.innerHTML = "<h2>Location tidak ditemukan.</h2>";
+}
+
+fetch(SHEETS[location])
+  .then(res => res.text())
+  .then(csv => {
+    const rows = csv.split("\n").map(r => r.split(","));
+    const tbody = document.querySelector("#alatTable tbody");
+
+    rows.slice(1).forEach(row => {
+      if (!row[0]) return;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row[0]}</td>
+        <td>${row[1]}</td>
+        <td>${row[2] || "-"}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+</script>
+
+</body>
+</html>
