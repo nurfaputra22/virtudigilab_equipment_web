@@ -198,13 +198,17 @@ async function loadListPage() {
   parsed.objects.forEach((row) => {
     let serialValue = String(row[serialCol] || "-").trim();
 
-  // Hilangkan spasi kiri-kanan
-  serialValue = serialValue ? serialValue.trim() : "";
+  // null / undefined → tidak tampil
+      if (!serialValue) return;
 
-  // **Jika serial benar-benar kosong → SKIP**
-  if (serialValue === "") return;
-    
-    tbody.insertAdjacentHTML(
+  // trim semua spasi
+      serialValue = String(serialValue).trim();
+
+  // benar-benar kosong → skip
+      if (serialValue === "") return;
+
+  // jika ada isinya (termasuk "-") → tampilkan
+      tbody.insertAdjacentHTML(
       "beforeend",
       `
       <tr>
@@ -228,5 +232,6 @@ async function loadListPage() {
 // =========================
 if (document.getElementById("detail-body")) loadDetailPage();
 if (document.getElementById("equipment-body")) loadListPage();
+
 
 
