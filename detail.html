@@ -102,6 +102,23 @@
     <h2 class="section-title">Log Calibration</h2>
     <div id="log-calibration">Memuat...</div>
 
+    <script>
+  // Ambil parameter SN dan LOC
+  const urlParams = new URLSearchParams(window.location.search);
+  const sn = urlParams.get("sn");
+  const loc = urlParams.get("loc");
+
+  // Generate QR Code untuk halaman detail
+  if (sn && loc) {
+    new QRCode(document.getElementById("qrcode"), {
+      text: `detail.html?sn=${sn}&loc=${loc}`,
+      width: 150,
+      height: 150
+    });
+  }
+  </script>
+
+    
   </main>
 
   <footer>
