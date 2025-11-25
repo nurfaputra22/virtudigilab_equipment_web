@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detail Alat | Virtu DigiLab</title>
 
+  <!-- STYLE UTAMA -->
   <link rel="stylesheet" href="style.css" />
 
   <style>
@@ -13,24 +14,20 @@
       width: 180px;
       text-align: left;
     }
-    .qr-box {
-      width: 160px;
-      margin: 20px auto;
-    }
+
     .section-title {
       margin-top: 40px;
       font-size: 20px;
       font-weight: bold;
     }
+
     .notfound {
       color: red;
       text-align: center;
       font-weight: bold;
     }
 
-    /* ==================================
-       DETAIL TABLE (TABEL INFORMASI ALAT)
-    =================================== */
+    /* === DETAIL TABLE === */
     .detail-table {
       width: 100%;
       border-collapse: collapse;
@@ -43,7 +40,7 @@
 
     .detail-table th,
     .detail-table td {
-      border: 1px solid #e2e8f0;
+      border: 2px solid #cbd5e1;
       padding: 10px 14px;
       font-size: 14px;
     }
@@ -54,16 +51,16 @@
       font-weight: 600;
     }
 
+    /* === QR BOX === */
     .qr-box {
       text-align: center;
-      padding: 20px;
+      padding: 15px;
     }
 
     #qrcode {
       margin-top: 10px;
     }
-</style>
-
+  </style>
 </head>
 
 <body>
@@ -75,24 +72,46 @@
   </header>
 
   <main>
-    <h2 class="section-title">Informasi Alat</h2>
-    <div id="data-container">Memuat data...</div>
 
+    <!-- INFORMASI ALAT -->
+    <h2 class="section-title">Informasi Alat</h2>
+
+    <div id="data-container">
+      <table class="detail-table">
+        <tbody id="detail-body">
+          <!-- SCRIPT.JS yang akan mengisi data -->
+          
+          <!-- BARIS QR CODE -->
+          <tr>
+            <th>QR Code</th>
+            <td>
+              <div class="qr-box">
+                <div id="qrcode"></div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LOG MAINTENANCE -->
     <h2 class="section-title">Log Maintenance</h2>
     <div id="log-maintenance">Memuat...</div>
 
+    <!-- LOG CALIBRATION -->
     <h2 class="section-title">Log Calibration</h2>
     <div id="log-calibration">Memuat...</div>
+
   </main>
 
   <footer>
     &copy; 2025 Virtu DigiLab
   </footer>
 
-  <!-- QR Code Library -->
+  <!-- QR CODE LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
-  <!-- Script utama -->
+  <!-- SCRIPT UTAMA -->
   <script src="script.js"></script>
 
 </body>
