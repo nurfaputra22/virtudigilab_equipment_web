@@ -77,75 +77,27 @@ const findSerialColumnFromHeaders = (h) =>
 
 
 // =========================
-// LIST.HTML — LOAD ASSET LIST BY LOCATION
-// =========================
-async function loadListPage() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const location = urlParams.get("location");
-  if (!location || !SHEETS[location]) return;
-
-  const tbody = document.getElementById("list-body");
-  const headerTitle = document.getElementById("headerLocation");
-  headerTitle.textContent = location;
-
-  try {
-    const parsed = await loadCSVParsed(SHEETS[location]);
-    const data = parsed.objects;
-    const serialCol = findSerialColumnFromHeaders(parsed.headers);
-
-    tbody.innerHTML = "";
-
-    let no = 1;
-    data.forEach((item, i) => {
-      const serial = item[serialCol];
-      const desc = item["Asset Description"] || item["Description"] || "-";
-
-      const detailURL =
-        BASE_PATH +
-        "detail.html?serial=" +
-        encodeURIComponent(serial) +
-        "&location=" +
-        encodeURIComponent(location);
-
-      const row = `
-        <tr>
-          <td>${no++}</td>
-          <td><a href="${detailURL}">${serial}</a></td>
-          <td>${desc}</td>
-          <td><div class="qr-${i}"></div></td>
-        </tr>`;
-      tbody.insertAdjacentHTML("beforeend", row);
-
-      new QRCode(document.querySelector(`.qr-${i}`), {
-        text: detailURL,
-        width: 70,
-        height: 70,
-      });
-    });
-  } catch (err) {
-    console.error(err);
-    tbody.innerHTML = `<tr><td colspan="4">Gagal memuat data.</td></tr>`;
-  }
-}
-
-
-// =========================
 // DETAIL.HTML — LOAD DETAIL ITEM
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
-  const serial = urlParams.get("serial");
-  const location = urlParams.get("location");
+  const sn = urlParams.get("sn");
+  const loc = urlParams.get("loc");
 
-  if (!serial || !location) return;
+  if (!sn || !loc || !SHEETS[loc]) {
+    document.getElementById("detail-body").innerHTML =
+      `<tr><td colspan="2">Parameter tidak valid</td></tr>`;
+    return;
+  }
 
   const tableBody = document.getElementById("detail-body");
 
-  const parsed = await loadCSVParsed(SHEETS[location]);
+  // Load CSV
+  const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
   const item = parsed.objects.find(
-    (r) => r[serialCol].trim() === serial.trim()
+    (r) => r[serialCol].trim() === sn.trim()
   );
 
   if (!item) {
@@ -153,37 +105,23 @@ async function loadDetailPage() {
     return;
   }
 
-  // Render semua field
+  // Render kolom secara urut
   parsed.headers.forEach((key) => {
     tableBody.insertAdjacentHTML(
-      "afterbegin",
+      "beforeend",
       `<tr><th>${key}</th><td>${item[key] || "-"}</td></tr>`
     );
   });
 
-  // QR Code di bawah tabel
-  const finalURL =
-    BASE_PATH +
-    "detail.html?serial=" +
-    encodeURIComponent(serial) +
-    "&location=" +
-    encodeURIComponent(location);
-
-  new QRCode(document.getElementById("qrcode"), {
-    text: finalURL,
-    width: 180,
-    height: 180,
-  });
-
-  // Load log maintenance & calibration
-  loadLogs(serial);
+  // Load Log
+  loadLogs(sn);
 }
 
 
 // =========================
 // LOAD LOGS
 // =========================
-async function loadLogs(serial) {
+async function loadLogs(sn) {
   const logM = await loadCSVParsed(LOG_M_URL);
   const logC = await loadCSVParsed(LOG_C_URL);
 
@@ -193,8 +131,8 @@ async function loadLogs(serial) {
   const tableM = document.getElementById("log-maintenance");
   const tableC = document.getElementById("log-calibration");
 
-  const mRows = logM.objects.filter((r) => r[mCol] === serial);
-  const cRows = logC.objects.filter((r) => r[cCol] === serial);
+  const mRows = logM.objects.filter((r) => r[mCol] === sn);
+  const cRows = logC.objects.filter((r) => r[cCol] === sn);
 
   renderLog(tableM, logM.headers, mRows);
   renderLog(tableC, logC.headers, cRows);
@@ -231,5 +169,4 @@ function renderLog(container, headers, rows) {
 // =========================
 // AUTO RUN
 // =========================
-if (document.getElementById("list-body")) loadListPage();
 if (document.getElementById("detail-body")) loadDetailPage();
