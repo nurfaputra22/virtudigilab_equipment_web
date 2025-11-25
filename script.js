@@ -167,6 +167,51 @@ function renderLog(container, headers, rows) {
 
 
 // =========================
+// LIST.HTML — LOAD EQUIPMENT PER LOKASI
+// =========================
+async function loadListPage() {
+  const params = new URLSearchParams(window.location.search);
+  const loc = params.get("location");
+
+  const titleEl = document.getElementById("room-title");
+  const tbody = document.getElementById("equipment-body");
+
+  if (!loc || !SHEETS[loc]) {
+    if (titleEl) titleEl.textContent = "Lokasi tidak valid";
+    return;
+  }
+
+  // Set judul lokasi
+  if (titleEl) titleEl.textContent = "Daftar Alat — " + loc;
+
+  // Load CSV equipment
+  const parsed = await loadCSVParsed(SHEETS[loc]);
+  const serialCol = findSerialColumnFromHeaders(parsed.headers);
+
+  parsed.objects.forEach((row) => {
+    let serialValue = row[serialCol] || "-";
+
+    tbody.insertAdjacentHTML(
+      "beforeend",
+      `
+      <tr>
+        <td>${row["Equipment Name"] || "-"}</td>
+        <td>${serialValue}</td>
+        <td>${row["Category"] || "-"}</td>
+        <td>
+          <a href="detail.html?sn=${serialValue}&loc=${loc}" class="detail-btn">
+            Detail
+          </a>
+        </td>
+      </tr>
+      `
+    );
+  });
+}
+
+
+// =========================
 // AUTO RUN
 // =========================
 if (document.getElementById("detail-body")) loadDetailPage();
+if (document.getElementById("equipment-body")) loadListPage();
