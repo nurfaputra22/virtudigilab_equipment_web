@@ -51,7 +51,6 @@
 
   <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
   <!-- QR code -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
@@ -98,6 +97,20 @@ if (!SHEETS[locationCode]) {
 }
 
 // ====================
+// AUTO DETECT COLUMN
+// ====================
+function findColumn(row, possibleNames) {
+  for (let key in row) {
+    if (!key) continue;
+    const clean = key.trim().toLowerCase();
+    for (let name of possibleNames) {
+      if (clean.includes(name)) return key;
+    }
+  }
+  return null;
+}
+
+// ====================
 // PARSE CSV
 // ====================
 Papa.parse(SHEETS[locationCode], {
@@ -110,13 +123,30 @@ Papa.parse(SHEETS[locationCode], {
     const tbody = document.getElementById("alatBody");
     tbody.innerHTML = "";
 
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4">Data kosong</td></tr>`;
+      return;
+    }
+
+    // Deteksi kolom
+    const sample = data[0];
+    const colSerial = findColumn(sample, ["serial", "sn", "nomor", "no"]);
+    const colDesc   = findColumn(sample, ["description", "deskripsi", "asset"]);
+
+    console.log("Kolom ditemukan:", colSerial, colDesc); // Debug
+
+    if (!colSerial) {
+      tbody.innerHTML = `<tr><td colspan="4" style="color:red">Kolom Serial Number tidak ditemukan</td></tr>`;
+      return;
+    }
+
     let no = 1;
 
     data.forEach((row, i) => {
-      const serial = row["Serial Number"];
+      const serial = row[colSerial];
       if (!serial) return;
 
-      const deskripsi = row["Asset Description"] || "-";
+      const deskripsi = row[colDesc] || "-";
       const qrId = "qr" + i;
 
       const tr = document.createElement("tr");
