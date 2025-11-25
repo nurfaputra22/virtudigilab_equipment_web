@@ -5,85 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detail Alat | Virtu DigiLab</title>
   <link rel="stylesheet" href="style.css" />
-
-  <style>
-    body { background: #f4f7fb; }
-
-    .detail-card {
-      background: #fff;
-      padding: 25px;
-      border-radius: 14px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
-      margin-top: 20px;
-    }
-
-    .section-title {
-      font-size: 22px;
-      font-weight: bold;
-      margin-top: 35px;
-      color: #1e293b;
-    }
-
-    /* --- TABLE UTAMA --- */
-    .detail-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      overflow: hidden;
-      border-radius: 12px;
-      margin-top: 10px;
-    }
-
-    .detail-table th {
-      background: #e2e8f0;
-      padding: 12px;
-      font-weight: 600;
-      width: 220px !important;   /* geser lebih kiri */
-      border-bottom: 1px solid #cbd5e1;
-      text-align: left;
-    }
-
-    .detail-table td {
-      padding: 12px;
-      border-bottom: 1px solid #e2e8f0;
-      background: #fff;
-    }
-
-    .qr-box {
-      text-align: center;
-      padding: 20px 0;
-    }
-
-    #qrcode {
-      margin-top: 10px;
-    }
-
-    /* --- LOG TABLES --- */
-    #log-maintenance table,
-    #log-calibration table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      background: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    #log-maintenance th,
-    #log-calibration th {
-      background: #e2e8f0;
-      padding: 10px;
-      font-weight: 600;
-      border-bottom: 1px solid #cbd5e1;
-      text-align: left;
-    }
-
-    #log-maintenance td,
-    #log-calibration td {
-      padding: 10px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
 
 <body>
@@ -96,24 +18,22 @@
 
   <main>
 
-<h2 class="section-title">Informasi Alat</h2>
+    <h2 class="section-title">Informasi Alat</h2>
 
-<div class="detail-card">
+    <div class="detail-card">
 
-  <!-- Tabel Informasi -->
-  <table class="detail-table">
-    <tbody id="detail-body">
-      <!-- script.js akan mengisi baris-barisnya -->
-    </tbody>
-  </table>
+      <table class="detail-table">
+        <tbody id="detail-body">
+          <!-- script.js akan mengisi baris -->
+        </tbody>
+      </table>
 
-  <!-- QR Code Paling Bawah -->
-  <div class="qr-box">
-    <h3>QR Code</h3>
-    <div id="qrcode"></div>
-  </div>
+      <div class="qr-box">
+        <h3>QR Code</h3>
+        <div id="qrcode"></div>
+      </div>
 
-</div>
+    </div>
 
     <h2 class="section-title">Log Maintenance</h2>
     <div id="log-maintenance">Memuat...</div>
@@ -121,17 +41,13 @@
     <h2 class="section-title">Log Calibration</h2>
     <div id="log-calibration">Memuat...</div>
 
-    <!-- QR CODE LIBRARY -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
-
-    <!-- SCRIPT UTAMA -->
     <script src="script.js"></script>
 
     <script>
-      // Generate QR untuk detail
-      const urlParams = new URLSearchParams(window.location.search);
-      const sn = urlParams.get("sn");
-      const loc = urlParams.get("loc");
+      // QR Code Auto
+      const p = new URLSearchParams(location.search);
+      const sn = p.get("sn");
+      const loc = p.get("loc");
 
       if (sn && loc) {
         new QRCode(document.getElementById("qrcode"), {
