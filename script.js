@@ -198,6 +198,8 @@ async function loadListPage() {
   parsed.objects.forEach((row) => {
     let serialValue = String(row[serialCol] || "-").trim();
 
+    if (!serialValue) return;
+    
     tbody.insertAdjacentHTML(
       "beforeend",
       `
@@ -222,3 +224,4 @@ async function loadListPage() {
 // =========================
 if (document.getElementById("detail-body")) loadDetailPage();
 if (document.getElementById("equipment-body")) loadListPage();
+
