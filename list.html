@@ -41,7 +41,6 @@
     }
     tr:hover {
       background: #f9fafb;
-      cursor: pointer;
     }
 
     .qr-mini {
@@ -87,47 +86,60 @@ const SHEETS = {
 const params = new URLSearchParams(window.location.search);
 const locationCode = params.get("location");
 
-document.getElementById("locationTitle").textContent = "Daftar Alat - " + locationCode;
+// Update title
+document.getElementById("locationTitle").textContent =
+  locationCode ? ("Daftar Alat - " + locationCode) : "Lokasi Tidak Dikenal";
 
-// Jika lokasi tidak ada
+// Jika lokasi tidak valid
 if (!SHEETS[locationCode]) {
-  document.getElementById("alatBody").innerHTML = `
-    <tr><td colspan="4" style="color:red">Lokasi tidak ditemukan</td></tr>
-  `;
+  document.getElementById("alatBody").innerHTML =
+    `<tr><td colspan="4" style="color:red">Lokasi tidak ditemukan</td></tr>`;
+  throw new Error("Invalid location");
 }
 
 // ====================
-// PARSE CSV DENGAN PAPAPARSE
+// PARSE CSV
 // ====================
 Papa.parse(SHEETS[locationCode], {
   download: true,
   header: true,
   complete: function(results) {
+
     const data = results.data;
     const tbody = document.getElementById("alatBody");
     tbody.innerHTML = "";
 
+    let no = 1;
+
     data.forEach((row, i) => {
       if (!row["Serial Number"]) return;
 
+      const serial = row["Serial Number"];
+      const deskripsi = row["Asset Description"] || "-";
+
+      const qrId = "qr" + i;
+
       const tr = document.createElement("tr");
 
-      // Buat elemen QR mini
-      const qrContainerId = "qr" + i;
-      const qrTd = `<div id="${qrContainerId}" class="qr-mini"></div>`;
-
       tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${row["Serial Number"]}</td>
-        <td>${row["Asset Description"] || "-"}</td>
-        <td>${qrTd}</td>
+        <td>${no++}</td>
+
+        <td>
+          <a href="detail.html?sn=${encodeURIComponent(serial)}&loc=${locationCode}">
+            ${serial}
+          </a>
+        </td>
+
+        <td>${deskripsi}</td>
+
+        <td><div id="${qrId}" class="qr-mini"></div></td>
       `;
 
       tbody.appendChild(tr);
 
       // Generate QR untuk detail.html
-      new QRCode(document.getElementById(qrContainerId), {
-        text: "detail.html?sn=" + row["Serial Number"],
+      new QRCode(document.getElementById(qrId), {
+        text: `detail.html?sn=${serial}&loc=${locationCode}`,
         width: 70,
         height: 70
       });
