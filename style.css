@@ -250,7 +250,7 @@ footer {
   background: #f3f6fa;
   font-weight: 600;
   color: #374151;
-  width: 220px !important;    /* paksa berlaku */
+  width: 220px;    /* paksa berlaku */
 }
 
 .detail-table tr:last-child td,
