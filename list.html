@@ -79,7 +79,7 @@
 // LINK CSV PER LOKASI
 // ====================
 const SHEETS = {
-  "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLIC7l_yvj3F10m6j5yRRi9Kpr-jDYEFAFXGczQrD8gY0G4sBo-ervRX9ePjBMMnqz15U9EDSo55xm/pub?gid=0&single=true&output=csv",
+  "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
   "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv"
 };
 
@@ -103,6 +103,7 @@ if (!SHEETS[locationCode]) {
 Papa.parse(SHEETS[locationCode], {
   download: true,
   header: true,
+  skipEmptyLines: true,
   complete: function(results) {
 
     const data = results.data;
@@ -112,11 +113,10 @@ Papa.parse(SHEETS[locationCode], {
     let no = 1;
 
     data.forEach((row, i) => {
-      if (!row["Serial Number"]) return;
-
       const serial = row["Serial Number"];
-      const deskripsi = row["Asset Description"] || "-";
+      if (!serial) return;
 
+      const deskripsi = row["Asset Description"] || "-";
       const qrId = "qr" + i;
 
       const tr = document.createElement("tr");
@@ -125,7 +125,7 @@ Papa.parse(SHEETS[locationCode], {
         <td>${no++}</td>
 
         <td>
-          <a href="detail.html?sn=${encodeURIComponent(serial)}&loc=${locationCode}">
+          <a href="detail.html?sn=${encodeURIComponent(serial)}&loc=${encodeURIComponent(locationCode)}">
             ${serial}
           </a>
         </td>
@@ -137,9 +137,9 @@ Papa.parse(SHEETS[locationCode], {
 
       tbody.appendChild(tr);
 
-      // Generate QR untuk detail.html
+      // QR menuju detail.html
       new QRCode(document.getElementById(qrId), {
-        text: `detail.html?sn=${serial}&loc=${locationCode}`,
+        text: `detail.html?sn=${encodeURIComponent(serial)}&loc=${encodeURIComponent(locationCode)}`,
         width: 70,
         height: 70
       });
