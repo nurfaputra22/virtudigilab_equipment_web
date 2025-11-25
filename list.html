@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daftar Alat</title>
+
+  <!-- STYLE -->
   <link rel="stylesheet" href="style.css">
 
   <style>
@@ -13,10 +15,8 @@
       margin: 0;
       padding: 20px;
     }
-
     h1 {
       text-align: center;
-      color: #111827;
       margin-bottom: 25px;
     }
 
@@ -26,73 +26,114 @@
       background: white;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
     th, td {
-      padding: 14px;
-      border: 1px solid #d1d5db;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
       text-align: left;
+      font-size: 14px;
     }
-
     th {
       background: #111827;
       color: white;
+      font-weight: bold;
     }
-
     tr:hover {
       background: #f9fafb;
       cursor: pointer;
     }
+
+    .qr-mini {
+      width: 70px;
+      height: 70px;
+    }
   </style>
+
+  <!-- PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- QR code -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
 
 <body>
 
-  <h1 id="locationTitle">Loading...</h1>
-  <table id="alatTable">
-    <thead>
-      <tr>
-        <th>Nama Alat</th>
-        <th>Serial Number</th>
-        <th>Kondisi</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<h1 id="locationTitle">Loading...</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nomor</th>
+      <th>Serial Number</th>
+      <th>Asset Description</th>
+      <th>QR Code</th>
+    </tr>
+  </thead>
+  <tbody id="alatBody">
+    <tr><td colspan="4">Memuat data...</td></tr>
+  </tbody>
+</table>
 
 <script>
+// ====================
+// LINK CSV PER LOKASI
+// ====================
 const SHEETS = {
   "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLIC7l_yvj3F10m6j5yRRi9Kpr-jDYEFAFXGczQrD8gY0G4sBo-ervRX9ePjBMMnqz15U9EDSo55xm/pub?gid=0&single=true&output=csv",
   "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv"
 };
 
-const urlParams = new URLSearchParams(window.location.search);
-const location = urlParams.get("location");
+const params = new URLSearchParams(window.location.search);
+const locationCode = params.get("location");
 
-document.getElementById("locationTitle").textContent = "Daftar Alat - " + location;
+document.getElementById("locationTitle").textContent = "Daftar Alat - " + locationCode;
 
-if (!SHEETS[location]) {
-  document.body.innerHTML = "<h2>Location tidak ditemukan.</h2>";
+// Jika lokasi tidak ada
+if (!SHEETS[locationCode]) {
+  document.getElementById("alatBody").innerHTML = `
+    <tr><td colspan="4" style="color:red">Lokasi tidak ditemukan</td></tr>
+  `;
 }
 
-fetch(SHEETS[location])
-  .then(res => res.text())
-  .then(csv => {
-    const rows = csv.split("\n").map(r => r.split(","));
-    const tbody = document.querySelector("#alatTable tbody");
+// ====================
+// PARSE CSV DENGAN PAPAPARSE
+// ====================
+Papa.parse(SHEETS[locationCode], {
+  download: true,
+  header: true,
+  complete: function(results) {
+    const data = results.data;
+    const tbody = document.getElementById("alatBody");
+    tbody.innerHTML = "";
 
-    rows.slice(1).forEach(row => {
-      if (!row[0]) return;
+    data.forEach((row, i) => {
+      if (!row["Serial Number"]) return;
+
       const tr = document.createElement("tr");
+
+      // Buat elemen QR mini
+      const qrContainerId = "qr" + i;
+      const qrTd = `<div id="${qrContainerId}" class="qr-mini"></div>`;
+
       tr.innerHTML = `
-        <td>${row[0]}</td>
-        <td>${row[1]}</td>
-        <td>${row[2] || "-"}</td>
+        <td>${i + 1}</td>
+        <td>${row["Serial Number"]}</td>
+        <td>${row["Asset Description"] || "-"}</td>
+        <td>${qrTd}</td>
       `;
+
       tbody.appendChild(tr);
+
+      // Generate QR untuk detail.html
+      new QRCode(document.getElementById(qrContainerId), {
+        text: "detail.html?sn=" + row["Serial Number"],
+        width: 70,
+        height: 70
+      });
     });
-  });
+  }
+});
 </script>
 
 </body>
