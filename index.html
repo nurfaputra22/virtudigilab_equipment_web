@@ -1,44 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Daftar Alat Laboratorium | Virtu DigiLab</title>
-
-  <link rel="stylesheet" href="style.css" />
-
-  <style>
-    .logo {
-      height: 60px;
-      margin-right: 10px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 15px;
-    }
-
-    .qr-box {
-      width: 90px;
-      height: 90px;
-      margin: auto;
-    }
-  </style>
-
-</head>
-<body>
-
-  <header>
-    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png"
-         alt="Virtu DigiLab Logo" class="logo" />
-    <h1>Daftar Laboratorium</h1>
-  </header>
-<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virtu DigiLab | Location</title>
+  <title>Virtu DigiLab | Daftar Lokasi</title>
+
+  <!-- STYLE UTAMA -->
   <link rel="stylesheet" href="style.css">
 
   <style>
@@ -46,12 +13,26 @@
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #f3f4f6;
       margin: 0;
-      padding: 20px;
+      padding: 0;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 25px;
+    header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      height: 55px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
       color: #111827;
     }
 
@@ -59,14 +40,14 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 20px;
-      padding: 10px;
+      padding: 20px;
     }
 
     .card {
       background: white;
       border-radius: 14px;
-      padding: 25px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       text-align: center;
       cursor: pointer;
       transition: 0.25s;
@@ -74,8 +55,8 @@
     }
 
     .card:hover {
-      transform: scale(1.04);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      transform: scale(1.05);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
 
     .card h2 {
@@ -83,27 +64,50 @@
       margin: 0;
       color: #111827;
     }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #6b7280;
+      font-size: 14px;
+      margin-top: 30px;
+    }
   </style>
 </head>
 
 <body>
 
+  <!-- HEADER -->
+  <header>
+    <img src="https://raw.githack.com/nurfaputra22/virtudigilab_equipment_web/main/logo_virtu.png"
+         alt="Virtu DigiLab Logo"
+         class="logo">
+
+    <h1>Daftar Lokasi Laboratorium</h1>
+  </header>
+
+  <!-- GRID LOKASI -->
   <div class="grid">
     <!-- Lokasi 1 -->
     <div class="card" onclick="goToLocation('22A3')">
       <h2>22A3</h2>
     </div>
-    
+
     <!-- Lokasi 2 -->
     <div class="card" onclick="goToLocation('27A6')">
       <h2>27A6</h2>
     </div>
 
-      <!-- Lokasi 3 -->
+    <!-- Lokasi 3 (opsional) -->
     <div class="card" onclick="goToLocation('26A2')">
       <h2>26A2</h2>
     </div>
   </div>
+
+  <!-- FOOTER -->
+  <footer>
+    © 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
+  </footer>
 
   <script>
     function goToLocation(location) {
@@ -111,15 +115,5 @@
     }
   </script>
 
-</body>
-
-  </main>
-
-  <footer>
-    &copy; 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
