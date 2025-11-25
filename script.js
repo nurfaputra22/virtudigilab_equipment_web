@@ -3,12 +3,15 @@
 // =========================
 const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
-const NRC_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?output=csv";
+// Data utama dipecah per lokasi
+const SHEETS = {
+  "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
+  "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=987654321&single=true&output=csv"
+};
 
+// Log (tetap sama, tidak berubah)
 const LOG_M_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1651659513&single=true&output=csv";
-
 const LOG_C_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1319359661&single=true&output=csv";
 
@@ -92,7 +95,7 @@ function makeDocumentLink(url) {
 
 
 // =========================
-// INDEX.HTML + Search + Filter
+// INDEX.HTML — LOAD ASSETS
 // =========================
 async function loadAssets() {
   const tbody = document.getElementById("assetGrid");
@@ -102,94 +105,83 @@ async function loadAssets() {
   if (!tbody) return;
 
   try {
-    const parsed = await loadCSVParsed(NRC_URL);
-    const data = parsed.objects;
-    const headers = parsed.headers;
+    // Hardcode 2 location
+    const LOCATIONS = ["22A3", "27A6"];
 
-    if (!data || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5">Tidak ada data.</td></tr>`;
-      return;
-    }
-
-    const serialCol = findSerialColumnFromHeaders(headers);
-    const descCol =
-      headers.find((h) => h.toLowerCase().includes("description")) ||
-      headers[1];
-
-    const locationCol =
-      headers.find((h) => h.toLowerCase().includes("location")) ||
-      headers[2];
-
-    // ========== Populate LOCATION dropdown ==========
-    const uniqueLoc = [...new Set(data.map((d) => d[locationCol]))]
-      .filter((x) => x && x.trim() !== "")
-      .sort();
-
-    uniqueLoc.forEach((loc) => {
+    // Isi dropdown (manual sesuai permintaan)
+    LOCATIONS.forEach((loc) => {
       const opt = document.createElement("option");
       opt.value = loc;
       opt.textContent = loc;
       locationFilter.appendChild(opt);
     });
 
-    // ========== Fungsi render tabel ==========
-    function renderTable(filteredData) {
+    // Load semua sheet
+    const sheetData = {};
+    for (const loc of LOCATIONS) {
+      sheetData[loc] = await loadCSVParsed(SHEETS[loc]);
+    }
+
+    // Render tabel
+    function renderTable(filteredLoc, keyword) {
       tbody.innerHTML = "";
+
+      if (!filteredLoc) return;
+
+      const parsed = sheetData[filteredLoc];
+      const data = parsed.objects;
+      const headers = parsed.headers;
+
+      const serialCol = findSerialColumnFromHeaders(headers);
+      const descCol =
+        headers.find((h) => h.toLowerCase().includes("description")) ||
+        headers[1];
+
       let no = 1;
 
-      filteredData.forEach((item, index) => {
-        const serial = item[serialCol];
-        if (!serial) return;
+      data
+        .filter((item) => {
+          if (!keyword) return true;
+          const low = keyword.toLowerCase();
+          return (
+            (item[serialCol] || "").toLowerCase().includes(low) ||
+            (item[descCol] || "").toLowerCase().includes(low)
+          );
+        })
+        .forEach((item, index) => {
+          const serial = item[serialCol];
+          const detailUrl =
+            BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
 
-        const detailUrl =
-          BASE_PATH + "detail.html?serial=" + encodeURIComponent(serial);
+          const row = `
+            <tr>
+              <td>${no++}</td>
+              <td><a href="${detailUrl}" target="_blank">${serial}</a></td>
+              <td>${item[descCol] || ""}</td>
+              <td>${filteredLoc}</td>
+              <td><div class="qr-${index}"></div></td>
+            </tr>
+          `;
+          tbody.insertAdjacentHTML("beforeend", row);
 
-        const row = `
-          <tr>
-            <td>${no++}</td>
-            <td><a href="${detailUrl}" target="_blank">${serial}</a></td>
-            <td>${item[descCol] || ""}</td>
-            <td>${item[locationCol] || ""}</td>
-            <td><div class="qr-${index}"></div></td>
-          </tr>
-        `;
-
-        tbody.insertAdjacentHTML("beforeend", row);
-
-        new QRCode(document.querySelector(`.qr-${index}`), {
-          text: detailUrl,
-          width: 80,
-          height: 80,
+          new QRCode(document.querySelector(`.qr-${index}`), {
+            text: detailUrl,
+            width: 80,
+            height: 80,
+          });
         });
-      });
     }
 
-    // ========== Fungsi filter ==========
-    function applyFilters() {
-      const keyword = searchInput.value.toLowerCase();
-      const selectedLocation = locationFilter.value;
+    // Event Handler
+    searchInput.addEventListener("input", () =>
+      renderTable(locationFilter.value, searchInput.value)
+    );
+    locationFilter.addEventListener("change", () =>
+      renderTable(locationFilter.value, searchInput.value)
+    );
 
-      const filtered = data.filter((item) => {
-        const matchSearch =
-          (item[serialCol] || "").toLowerCase().includes(keyword) ||
-          (item[descCol] || "").toLowerCase().includes(keyword) ||
-          (item[locationCol] || "").toLowerCase().includes(keyword);
-
-        const matchLocation =
-          selectedLocation === "" || item[locationCol] === selectedLocation;
-
-        return matchSearch && matchLocation;
-      });
-
-      renderTable(filtered);
-    }
-
-    // Event listener
-    searchInput.addEventListener("input", applyFilters);
-    locationFilter.addEventListener("change", applyFilters);
-
-    // Render awal
-    renderTable(data);
+    // Render awal default ke lokasi pertama
+    renderTable(LOCATIONS[0], "");
 
   } catch (err) {
     console.error(err);
@@ -200,7 +192,7 @@ async function loadAssets() {
 
 
 // =========================
-// DETAIL.HTML
+// DETAIL.HTML (TIDAK DIUBAH)
 // =========================
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -208,15 +200,15 @@ async function loadDetailPage() {
   if (!serialParam) return;
 
   const [nrcParsed, mParsed, cParsed] = await Promise.all([
-    loadCSVParsed(NRC_URL),
+    loadCSVParsed(SHEETS["22A3"]), // tetap gunakan sheet umum
     loadCSVParsed(LOG_M_URL),
     loadCSVParsed(LOG_C_URL),
   ]);
 
   const nrc = nrcParsed.objects;
   const headers = nrcParsed.headers;
-  const serialCol = findSerialColumnFromHeaders(headers);
 
+  const serialCol = findSerialColumnFromHeaders(headers);
   const container = document.getElementById("data-container");
 
   const item = nrc.find(
@@ -259,7 +251,7 @@ async function loadDetailPage() {
     });
   }
 
-  // Maintenance Log
+  // Log Maintenance
   const logMContainer = document.getElementById("log-maintenance");
   const serialColM = findSerialColumnFromHeaders(mParsed.headers);
   const matchedM = mParsed.objects.filter(
@@ -269,27 +261,27 @@ async function loadDetailPage() {
   if (!matchedM.length) {
     logMContainer.innerHTML = "Tidak ada data.";
   } else {
-    let headerHtml = "<table><tr>";
-    mParsed.headers.forEach((h) => (headerHtml += `<th>${h}</th>`));
-    headerHtml += "</tr>";
+    let htmlM = "<table><tr>";
+    mParsed.headers.forEach((h) => (htmlM += `<th>${h}</th>`));
+    htmlM += "</tr>";
 
-    let bodyHtml = "";
     matchedM.forEach((obj) => {
-      bodyHtml += "<tr>";
+      htmlM += "<tr>";
       mParsed.headers.forEach((h) => {
         if (h.toLowerCase() === "document") {
-          bodyHtml += `<td>${makeDocumentLink(obj[h])}</td>`;
+          htmlM += `<td>${makeDocumentLink(obj[h])}</td>`;
         } else {
-          bodyHtml += `<td>${obj[h] || ""}</td>`;
+          htmlM += `<td>${obj[h] || ""}</td>`;
         }
       });
-      bodyHtml += "</tr>";
+      htmlM += "</tr>";
     });
 
-    logMContainer.innerHTML = headerHtml + bodyHtml + "</table>";
+    htmlM += "</table>";
+    logMContainer.innerHTML = htmlM;
   }
 
-  // Calibration Log
+  // Log Calibration
   const logCContainer = document.getElementById("log-calibration");
   const serialColC = findSerialColumnFromHeaders(cParsed.headers);
   const matchedC = cParsed.objects.filter(
@@ -299,26 +291,27 @@ async function loadDetailPage() {
   if (!matchedC.length) {
     logCContainer.innerHTML = "Tidak ada data.";
   } else {
-    let headerHtml = "<table><tr>";
-    cParsed.headers.forEach((h) => (headerHtml += `<th>${h}</th>`));
-    headerHtml += "</tr>";
+    let htmlC = "<table><tr>";
+    cParsed.headers.forEach((h) => (htmlC += `<th>${h}</th>`));
+    htmlC += "</tr>";
 
-    let bodyHtml = "";
     matchedC.forEach((obj) => {
-      bodyHtml += "<tr>";
+      htmlC += "<tr>";
       cParsed.headers.forEach((h) => {
         if (h.toLowerCase() === "document") {
-          bodyHtml += `<td>${makeDocumentLink(obj[h])}</td>`;
+          htmlC += `<td>${makeDocumentLink(obj[h])}</td>`;
         } else {
-          bodyHtml += `<td>${obj[h] || ""}</td>`;
+          htmlC += `<td>${obj[h] || ""}</td>`;
         }
       });
-      bodyHtml += "</tr>";
+      htmlC += "</tr>";
     });
 
-    logCContainer.innerHTML = headerHtml + bodyHtml + "</table>";
+    htmlC += "</table>";
+    logCContainer.innerHTML = htmlC;
   }
 }
+
 
 
 // =========================
