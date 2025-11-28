@@ -49,10 +49,7 @@
     }
   </style>
 
-  <!-- PapaParse CSV Parser -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <!-- QR Code Library -->
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
 </head>
@@ -76,14 +73,8 @@
 </table>
 
 <script>
-// ====================
-// BASE PATH (WAJIB AGAR QR BENAR)
-// ====================
 const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
-// ====================
-// LINK CSV PER LOKASI
-// ====================
 const SHEETS = {
   "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
   "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
@@ -92,26 +83,18 @@ const SHEETS = {
   "26A4": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=756843741&single=true&output=csv"
 };
 
-// ====================
-// AMBIL PARAMETER LOCATION
-// ====================
 const params = new URLSearchParams(window.location.search);
 const locationCode = params.get("location");
 
-// Title halaman
 document.getElementById("locationTitle").textContent =
   locationCode ? ("Daftar Alat - " + locationCode) : "Lokasi Tidak Dikenal";
 
-// Validasi lokasi
 if (!SHEETS[locationCode]) {
   document.getElementById("alatBody").innerHTML =
     `<tr><td colspan="4" style="color:red">Lokasi tidak ditemukan</td></tr>`;
   throw new Error("Invalid location");
 }
 
-// ====================
-// FUNGSI DETEKSI KOLOM
-// ====================
 function findColumn(row, possibleNames) {
   for (let key in row) {
     if (!key) continue;
@@ -123,9 +106,6 @@ function findColumn(row, possibleNames) {
   return null;
 }
 
-// ====================
-// LOAD & PARSE CSV
-// ====================
 Papa.parse(SHEETS[locationCode], {
   download: true,
   header: true,
@@ -141,16 +121,26 @@ Papa.parse(SHEETS[locationCode], {
       return;
     }
 
-    // Deteksi kolom dari header
     const sample = data[0];
     const colSerial = findColumn(sample, ["serial", "sn", "nomor", "no"]);
-    const colDesc = findColumn(sample, [
+
+    // ---- PERBAIKAN UTAMA ----
+    let colDesc = null;
+    for (let key in sample) {
+      if (key && key.trim().toLowerCase() === "asset description") {
+        colDesc = key;
+        break;
+      }
+    }
+    if (!colDesc) {
+      colDesc = findColumn(sample, [
         "asset description",
-        "description",
-        "deskripsi",
         "asset desc",
-        "asset"
-    ]);
+        "description",
+        "deskripsi"
+      ]);
+    }
+    // --------------------------
 
     if (!colSerial) {
       tbody.innerHTML =
@@ -160,7 +150,6 @@ Papa.parse(SHEETS[locationCode], {
 
     let no = 1;
 
-    // Loop semua item
     data.forEach((row, i) => {
       const serial = row[colSerial];
       if (!serial || serial.trim() === "") return;
@@ -186,9 +175,6 @@ Papa.parse(SHEETS[locationCode], {
 
       tbody.appendChild(tr);
 
-      // ============================
-      // QR CODE MENUJU DETAIL.HTML DENGAN URL LENGKAP
-      // ============================
       new QRCode(document.getElementById(qrId), {
         text: `${BASE_PATH}detail.html?sn=${encodeURIComponent(serial)}&loc=${encodeURIComponent(locationCode)}`,
         width: 70,
