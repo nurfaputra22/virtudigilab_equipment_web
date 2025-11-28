@@ -23,9 +23,7 @@
     <div class="detail-card">
 
       <table class="detail-table">
-        <tbody id="detail-body">
-          <!-- script.js akan mengisi baris -->
-        </tbody>
+        <tbody id="detail-body"></tbody>
       </table>
 
       <div class="qr-box">
@@ -44,14 +42,14 @@
     <script src="script.js"></script>
 
     <script>
-      // QR Code Auto
+      // QR CODE – gunakan URL absolut agar tidak muncul error saat di-scan
       const p = new URLSearchParams(location.search);
       const sn = p.get("sn");
       const loc = p.get("loc");
 
       if (sn && loc) {
         new QRCode(document.getElementById("qrcode"), {
-          text: `detail.html?sn=${sn}&loc=${loc}`,
+          text: `https://nurfaputra22.github.io/virtudigilab_equipment_web/detail.html?sn=${sn}&loc=${loc}`,
           width: 150,
           height: 150
         });
