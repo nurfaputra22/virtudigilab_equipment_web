@@ -2,7 +2,7 @@
 // CONFIG
 // =========================
 
-const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
+const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web";
 
 // Semua lokasi → Google Sheets CSV
 const SHEETS = {
@@ -308,3 +308,4 @@ function escapeAttr(s) {
   if (s == null) return "";
   return String(s).replaceAll('"', "&quot;");
 }
+
