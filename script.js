@@ -60,6 +60,8 @@ function csvToParsed(csvText) {
   }
 
   const clean = rows.filter((r) => r.some((c) => c.trim() !== ""));
+  if (clean.length === 0) return { headers: [], objects: [] };
+
   const headers = clean[0];
   const objects = clean.slice(1).map((r) => {
     const obj = {};
@@ -72,6 +74,7 @@ function csvToParsed(csvText) {
 
 async function loadCSVParsed(url) {
   const res = await fetch(url);
+  if (!res.ok) throw new Error("Gagal memuat CSV: " + res.status);
   return csvToParsed(await res.text());
 }
 
@@ -89,15 +92,20 @@ async function loadDetailPage() {
   const loc = urlParams.get("loc");
 
   if (!sn || !loc || !SHEETS[loc]) {
-    document.getElementById("detail-body").innerHTML =
-      `<tr><td colspan="2">Parameter tidak valid</td></tr>`;
+    const el = document.getElementById("detail-body");
+    if (el) el.innerHTML = `<tr><td colspan="2">Parameter tidak valid</td></tr>`;
     return;
   }
 
   const tableBody = document.getElementById("detail-body");
+  if (!tableBody) return;
 
   const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
+  if (!serialCol) {
+    tableBody.innerHTML = `<tr><td colspan="2">Kolom Serial tidak ditemukan pada sheet</td></tr>`;
+    return;
+  }
 
   const item = parsed.objects.find(
     (r) => String(r[serialCol]).trim() === sn
@@ -108,19 +116,26 @@ async function loadDetailPage() {
     return;
   }
 
+  // kosongkan dahulu (hindari duplikat saat reload)
+  tableBody.innerHTML = "";
+
   parsed.headers.forEach((key) => {
     tableBody.insertAdjacentHTML(
       "beforeend",
-      `<tr><th>${key}</th><td>${item[key] || "-"}</td></tr>`
+      `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(item[key] || "-")}</td></tr>`
     );
   });
 
-  // QR DI DETAIL
-  new QRCode(document.getElementById("qrcode"), {
-    text: `${BASE_PATH}detail.html?sn=${sn}&loc=${loc}`,
-    width: 150,
-    height: 150
-  });
+  // pastikan kontainer QR bersih sebelum membuat QR baru
+  const qrEl = document.getElementById("qrcode");
+  if (qrEl) {
+    qrEl.innerHTML = "";
+    new QRCode(qrEl, {
+      text: `${BASE_PATH}detail.html?sn=${encodeURIComponent(sn)}&loc=${encodeURIComponent(loc)}`,
+      width: 150,
+      height: 150
+    });
+  }
 
   loadLogs(sn);
 }
@@ -142,35 +157,41 @@ async function loadLogs(sn) {
   const tableM = document.getElementById("log-maintenance");
   const tableC = document.getElementById("log-calibration");
 
-  const mRows = logM.objects.filter(
-    (r) => String(r[mCol]).trim() === snFix
-  );
+  if (!tableM || !tableC) return;
 
-  const cRows = logC.objects.filter(
+  const mRows = mCol ? logM.objects.filter(
+    (r) => String(r[mCol]).trim() === snFix
+  ) : [];
+
+  const cRows = cCol ? logC.objects.filter(
     (r) => String(r[cCol]).trim() === snFix
-  );
+  ) : [];
 
   renderLog(tableM, logM.headers, mRows);
   renderLog(tableC, logC.headers, cRows);
 }
 
 function renderLog(container, headers, rows) {
-  if (!rows.length) {
+  if (!rows || rows.length === 0) {
     container.innerHTML = "Tidak ada data";
     return;
   }
 
   let html = "<table><tr>";
-  headers.forEach((h) => (html += `<th>${h}</th>`));
+  headers.forEach((h) => {
+    html += `<th>${escapeHtml(h)}</th>`;
+  });
   html += "</tr>";
 
   rows.forEach((r) => {
     html += "<tr>";
     headers.forEach((h) => {
+      const val = r[h] || "";
       if (h.toLowerCase() === "document") {
-        html += `<td>${r[h] ? `<a href="${r[h]}" target="_blank">File</a>` : "-"}</td>`;
+        const link = val ? `<a href="${escapeAttr(val)}" target="_blank">File</a>` : "-";
+        html += `<td>${link}</td>`;
       } else {
-        html += `<td>${r[h] || "-"}</td>`;
+        html += `<td>${escapeHtml(val || "-")}</td>`;
       }
     });
     html += "</tr>";
@@ -198,29 +219,42 @@ async function loadListPage() {
   }
 
   if (titleEl) titleEl.textContent = "Daftar Alat — " + loc;
+  if (!tbody) return;
 
   const parsed = await loadCSVParsed(SHEETS[loc]);
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
+  if (!serialCol) {
+    tbody.innerHTML = `<tr><td colspan="5">Kolom Serial tidak ditemukan pada sheet</td></tr>`;
+    return;
+  }
+
+  // bersihkan tbody dulu
+  tbody.innerHTML = "";
 
   parsed.objects.forEach((row) => {
-    const serialValue = String(row[serialCol] || "").trim();
+    const serialValueRaw = row[serialCol];
+    const serialValue = String(serialValueRaw || "").trim();
 
-    if (serialValue === "") return; // hilangkan row kosong
+    // hilangkan row yang benar-benar kosong di kolom Serial Number
+    if (serialValue === "") return;
+
+    const name = row["Equipment Name"] || row["Asset Description"] || "-";
+    const category = row["Category"] || "-";
 
     tbody.insertAdjacentHTML(
       "beforeend",
       `
       <tr>
-        <td>${row["Equipment Name"] || row["Asset Description"] || "-"}</td>
-        <td>${serialValue}</td>
-        <td>${row["Category"] || "-"}</td>
+        <td>${escapeHtml(name)}</td>
+        <td>${escapeHtml(serialValue)}</td>
+        <td>${escapeHtml(category)}</td>
 
         <td>
-          <div class="qr" data-serial="${serialValue}" data-loc="${loc}"></div>
+          <div class="qr" data-serial="${escapeAttr(serialValue)}" data-loc="${escapeAttr(loc)}"></div>
         </td>
 
         <td>
-          <a href="detail.html?sn=${serialValue}&loc=${loc}" class="detail-btn">
+          <a href="detail.html?sn=${encodeURIComponent(serialValue)}&loc=${encodeURIComponent(loc)}" class="detail-btn">
             Detail
           </a>
         </td>
@@ -229,21 +263,25 @@ async function loadListPage() {
     );
   });
 
-  // Generate QR di list alat
-  setTimeout(() => {
+  // Generate QR di daftar alat (gunakan BASE_PATH agar QR menuju URL penuh)
+  // gunakan requestAnimationFrame supaya DOM sudah ter-render
+  requestAnimationFrame(() => {
     document.querySelectorAll(".qr").forEach(div => {
       const sn = div.dataset.serial;
       const loc = div.dataset.loc;
 
       if (!sn || !loc) return;
 
+      // kosongkan dulu (hindari duplikat)
+      div.innerHTML = "";
+
       new QRCode(div, {
-        text: `${BASE_PATH}detail.html?sn=${sn}&loc=${loc}`,
+        text: `${BASE_PATH}detail.html?sn=${encodeURIComponent(sn)}&loc=${encodeURIComponent(loc)}`,
         width: 90,
         height: 90
       });
     });
-  }, 200);
+  });
 }
 
 
@@ -253,3 +291,20 @@ async function loadListPage() {
 
 if (document.getElementById("detail-body")) loadDetailPage();
 if (document.getElementById("equipment-body")) loadListPage();
+
+
+// ================
+// Helpers
+// ================
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+function escapeAttr(s) {
+  if (s == null) return "";
+  return String(s).replaceAll('"', "&quot;");
+}
