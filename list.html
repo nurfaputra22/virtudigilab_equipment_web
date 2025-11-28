@@ -144,7 +144,13 @@ Papa.parse(SHEETS[locationCode], {
     // Deteksi kolom dari header
     const sample = data[0];
     const colSerial = findColumn(sample, ["serial", "sn", "nomor", "no"]);
-    const colDesc   = findColumn(sample, ["description", "deskripsi", "asset"]);
+    const colDesc = findColumn(sample, [
+        "asset description",
+        "description",
+        "deskripsi",
+        "asset desc",
+        "asset"
+    ]);
 
     if (!colSerial) {
       tbody.innerHTML =
