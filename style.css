@@ -93,9 +93,12 @@ main {
   transition: 0.25s ease;
 }
 
-/* === QR CODE SECTION === */
+/* ===========================
+   QR CODE SECTION
+=========================== */
+
 .qr-box {
-  text-align: center;
+  text-align: center;        /* QR & judul di tengah */
   margin-top: 25px;
   padding-top: 22px;
   border-top: 2px solid #e2e8f0;
@@ -104,6 +107,11 @@ main {
 .qr-box h3 {
   margin-bottom: 10px;
   color: #1e293b;
+}
+
+#qrcode {
+  display: inline-block;     /* Agar bisa benar-benar center */
+  margin-top: 10px;
 }
 
 #qrcode img {
