@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Detail Alat | Virtu DigiLab</title>
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
@@ -23,12 +24,14 @@
     <div class="detail-card">
 
       <table class="detail-table">
-        <tbody id="detail-body"></tbody>
+        <tbody id="detail-body">
+          <!-- script.js akan mengisi -->
+        </tbody>
       </table>
 
       <div class="qr-box">
         <h3>QR Code</h3>
-        <div id="qrcode"></div>
+        <div id="qrcode" class="qr-center"></div>
       </div>
 
     </div>
@@ -39,13 +42,12 @@
     <h2 class="section-title">Log Calibration</h2>
     <div id="log-calibration">Memuat...</div>
 
-    <script src="script.js"></script>
-
   </main>
 
   <footer>
     &copy; 2025 Virtu DigiLab
   </footer>
 
+  <script src="script.js"></script>
 </body>
 </html>
