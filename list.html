@@ -142,7 +142,10 @@ Papa.parse(SHEETS[locationCode], {
 
     let no = 1;
 
-    data.forEach((row, i) => {
+    data
+      .filter(row => row["Serial Number"] && row["Serial Number"].trim() !== "")
+      .forEach((row, i) => {
+
       const serial = row["Serial Number"];
       const deskripsi = row["Asset Description"] || "-";
       const qrId = "qr" + i;
