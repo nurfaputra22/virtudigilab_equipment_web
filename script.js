@@ -14,7 +14,7 @@ const SHEETS = {
   "26A3":
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=956477238&single=true&output=csv",
   "26A4":
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=756843741&single=true&output=csv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=756843741&single=true&output=csv"
 };
 
 // Log maintenance & calibration
@@ -229,5 +229,6 @@ async function loadListPage() {
 // =========================
 if (document.getElementById("detail-body")) loadDetailPage();
 if (document.getElementById("equipment-body")) loadListPage();
+
 
 
