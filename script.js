@@ -30,10 +30,13 @@ function csvToParsed(csvText) {
     const c = csvText[i];
 
     if (c === '"') {
+      // double quote → escape
       if (csvText[i + 1] === '"') {
         current += '"';
         i++;
-      } else inside = !inside;
+      } else {
+        inside = !inside;
+      }
     } else if (c === "," && !inside) {
       row.push(current.trim());
       current = "";
@@ -45,7 +48,9 @@ function csvToParsed(csvText) {
         current = "";
       }
       if (c === "\r" && csvText[i + 1] === "\n") i++;
-    } else current += c;
+    } else {
+      current += c;
+    }
   }
 
   if (current !== "" || row.length > 0) {
@@ -71,8 +76,8 @@ async function loadCSVParsed(url) {
   return csvToParsed(await res.text());
 }
 
-const findSerialColumnFromHeaders = (h) =>
-  h.find((x) => x.toLowerCase().includes("serial")) || null;
+const findSerialColumnFromHeaders = (headers) =>
+  headers.find((x) => x.toLowerCase().includes("serial")) || null;
 
 
 // =========================
@@ -103,6 +108,7 @@ async function loadDetailPage() {
     return;
   }
 
+  // tampilkan semua field
   parsed.headers.forEach((key) => {
     tableBody.insertAdjacentHTML(
       "beforeend",
@@ -110,7 +116,7 @@ async function loadDetailPage() {
     );
   });
 
-  // QR FIX — gunakan URL penuh
+  // QR di detail
   new QRCode(document.getElementById("qrcode"), {
     text: `${BASE_PATH}detail.html?sn=${sn}&loc=${loc}`,
     width: 150,
@@ -166,7 +172,9 @@ function renderLog(container, headers, rows) {
           ? `<a href="${r[h]}" target="_blank">File</a>`
           : "-";
         html += `<td>${link}</td>`;
-      } else html += `<td>${r[h] || "-"}</td>`;
+      } else {
+        html += `<td>${r[h] || "-"}</td>`;
+      }
     });
     html += "</tr>";
   });
@@ -181,8 +189,6 @@ function renderLog(container, headers, rows) {
 // =========================
 async function loadListPage() {
   const params = new URLSearchParams(window.location.search);
-  
-  // FIX — samakan parameter menjadi loc
   const loc = params.get("loc");
 
   const titleEl = document.getElementById("room-title");
@@ -201,8 +207,8 @@ async function loadListPage() {
   parsed.objects.forEach((row) => {
     let serialValue = String(row[serialCol] || "").trim();
 
-    // RULE FINAL:
-    if (serialValue === "") return; // hanya yang benar-benar kosong disembunyikan
+    // Hanya hilangkan yang benar-benar kosong
+    if (serialValue === "") return;
 
     tbody.insertAdjacentHTML(
       "beforeend",
@@ -211,6 +217,11 @@ async function loadListPage() {
         <td>${row["Equipment Name"] || row["Asset Description"] || "-"}</td>
         <td>${serialValue}</td>
         <td>${row["Category"] || "-"}</td>
+
+        <td>
+          <div class="qr" data-serial="${serialValue}" data-loc="${loc}"></div>
+        </td>
+
         <td>
           <a href="detail.html?sn=${serialValue}&loc=${loc}" class="detail-btn">
             Detail
@@ -220,6 +231,24 @@ async function loadListPage() {
       `
     );
   });
+
+  // =========================
+  // Generate QR di daftar alat
+  // =========================
+  setTimeout(() => {
+    document.querySelectorAll(".qr").forEach(div => {
+      const sn = div.dataset.serial;
+      const loc = div.dataset.loc;
+
+      if (!sn || !loc) return;
+
+      new QRCode(div, {
+        text: `${BASE_PATH}detail.html?sn=${sn}&loc=${loc}`,
+        width: 90,
+        height: 90
+      });
+    });
+  }, 200);
 }
 
 
