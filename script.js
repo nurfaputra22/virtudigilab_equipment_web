@@ -1,9 +1,10 @@
 // =========================
 // CONFIG
 // =========================
+
 const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
-// Semua lokasi → CSV berbeda
+// Semua lokasi → Google Sheets CSV
 const SHEETS = {
   "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
   "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
@@ -20,6 +21,7 @@ const LOG_C_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9Ebtt
 // =========================
 // CSV PARSER
 // =========================
+
 function csvToParsed(csvText) {
   const rows = [];
   let current = "";
@@ -30,7 +32,6 @@ function csvToParsed(csvText) {
     const c = csvText[i];
 
     if (c === '"') {
-      // double quote → escape
       if (csvText[i + 1] === '"') {
         current += '"';
         i++;
@@ -60,9 +61,7 @@ function csvToParsed(csvText) {
 
   const clean = rows.filter((r) => r.some((c) => c.trim() !== ""));
   const headers = clean[0];
-  const body = clean.slice(1);
-
-  const objects = body.map((r) => {
+  const objects = clean.slice(1).map((r) => {
     const obj = {};
     headers.forEach((h, i) => (obj[h] = r[i] || ""));
     return obj;
@@ -83,6 +82,7 @@ const findSerialColumnFromHeaders = (headers) =>
 // =========================
 // DETAIL.HTML — LOAD DETAIL ITEM
 // =========================
+
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const sn = String(urlParams.get("sn") || "").trim();
@@ -108,7 +108,6 @@ async function loadDetailPage() {
     return;
   }
 
-  // tampilkan semua field
   parsed.headers.forEach((key) => {
     tableBody.insertAdjacentHTML(
       "beforeend",
@@ -116,7 +115,7 @@ async function loadDetailPage() {
     );
   });
 
-  // QR di detail
+  // QR DI DETAIL
   new QRCode(document.getElementById("qrcode"), {
     text: `${BASE_PATH}detail.html?sn=${sn}&loc=${loc}`,
     width: 150,
@@ -130,6 +129,7 @@ async function loadDetailPage() {
 // =========================
 // LOAD LOGS
 // =========================
+
 async function loadLogs(sn) {
   const snFix = String(sn).trim();
 
@@ -168,10 +168,7 @@ function renderLog(container, headers, rows) {
     html += "<tr>";
     headers.forEach((h) => {
       if (h.toLowerCase() === "document") {
-        const link = r[h]
-          ? `<a href="${r[h]}" target="_blank">File</a>`
-          : "-";
-        html += `<td>${link}</td>`;
+        html += `<td>${r[h] ? `<a href="${r[h]}" target="_blank">File</a>` : "-"}</td>`;
       } else {
         html += `<td>${r[h] || "-"}</td>`;
       }
@@ -187,6 +184,7 @@ function renderLog(container, headers, rows) {
 // =========================
 // LIST.HTML — LOAD EQUIPMENT
 // =========================
+
 async function loadListPage() {
   const params = new URLSearchParams(window.location.search);
   const loc = params.get("loc");
@@ -205,10 +203,9 @@ async function loadListPage() {
   const serialCol = findSerialColumnFromHeaders(parsed.headers);
 
   parsed.objects.forEach((row) => {
-    let serialValue = String(row[serialCol] || "").trim();
+    const serialValue = String(row[serialCol] || "").trim();
 
-    // Hanya hilangkan yang benar-benar kosong
-    if (serialValue === "") return;
+    if (serialValue === "") return; // hilangkan row kosong
 
     tbody.insertAdjacentHTML(
       "beforeend",
@@ -232,9 +229,7 @@ async function loadListPage() {
     );
   });
 
-  // =========================
-  // Generate QR di daftar alat
-  // =========================
+  // Generate QR di list alat
   setTimeout(() => {
     document.querySelectorAll(".qr").forEach(div => {
       const sn = div.dataset.serial;
@@ -255,5 +250,6 @@ async function loadListPage() {
 // =========================
 // AUTO RUN
 // =========================
+
 if (document.getElementById("detail-body")) loadDetailPage();
 if (document.getElementById("equipment-body")) loadListPage();
