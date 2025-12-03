@@ -175,11 +175,12 @@ Papa.parse(SHEETS[locationCode], {
 
       tbody.appendChild(tr);
 
-      new QRCode(document.getElementById(qrId), {
-        text: `${BASE_PATH}detail.html?sn=${encodeURIComponent(serial)}&loc=${encodeURIComponent(locationCode)}`,
-        width: 70,
-        height: 70
-      });
+    new QRCode(document.getElementById(qrId), {
+      text: BASE_PATH + "detail.html?sn=" + serial + "&loc=" + locationCode,
+      width: 70,
+      height: 70
+    });
+
     });
   }
 });
