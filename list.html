@@ -17,13 +17,20 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+    }
+    #plantName {
+      text-align: center;
+      margin-top: 0;
+      color: #444;
+      font-size: 15px;
+      margin-bottom: 5px;
     }
     #totalAlat {
       text-align: center;
       font-weight: bold;
-      margin-top: -5px;
-      margin-bottom: 25px;
+      margin-top: 0px;
+      margin-bottom: 20px;
       font-size: 16px;
       color: #111;
     }
@@ -65,7 +72,8 @@
 <body>
 
 <h1 id="locationTitle">Loading...</h1>
-<p id="totalAlat"></p> <!-- TOTAL ALAT -->
+<p id="plantName"></p>
+<p id="totalAlat"></p>
 
 <table>
   <thead>
@@ -82,8 +90,25 @@
 </table>
 
 <script>
+/* ------------------------------------------
+   BASE PATH FIXED → SELALU ADA SLASH
+-------------------------------------------*/
 const BASE_PATH = "https://nurfaputra22.github.io/virtudigilab_equipment_web/";
 
+/* ------------------------------------------
+   MAPPING NAMA PLANT (EDIT SESUAI KEBUTUHAN)
+-------------------------------------------*/
+const PLANT_NAME = {
+  "22A3": "National Research Center",
+  "27A6": "Nusa Dua",
+  "26A2": "Kediri Bangsal",
+  "26A3": "Malang Blimbing",
+  "26A4": "Surabaya Rungkut"
+};
+
+/* ------------------------------------------
+   GOOGLE SHEETS SOURCE
+-------------------------------------------*/
 const SHEETS = {
   "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
   "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
@@ -92,18 +117,33 @@ const SHEETS = {
   "26A4": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=756843741&single=true&output=csv"
 };
 
+/* ------------------------------------------
+   GET PARAMETER
+-------------------------------------------*/
 const params = new URLSearchParams(window.location.search);
 const locationCode = params.get("location");
 
+/* ------------------------------------------
+   TITLE + NAMA PLANT
+-------------------------------------------*/
 document.getElementById("locationTitle").textContent =
   locationCode ? ("Daftar Alat - " + locationCode) : "Lokasi Tidak Dikenal";
 
+document.getElementById("plantName").textContent =
+  PLANT_NAME[locationCode] || "";
+
+/* ------------------------------------------
+   VALIDASI LOKASI
+-------------------------------------------*/
 if (!SHEETS[locationCode]) {
   document.getElementById("alatBody").innerHTML =
     `<tr><td colspan="4" style="color:red">Lokasi tidak ditemukan</td></tr>`;
   throw new Error("Invalid location");
 }
 
+/* ------------------------------------------
+   PENCARIAN KOLOM YANG DINAMIS
+-------------------------------------------*/
 function findColumn(row, possibleNames) {
   for (let key in row) {
     if (!key) continue;
@@ -115,6 +155,9 @@ function findColumn(row, possibleNames) {
   return null;
 }
 
+/* ------------------------------------------
+   LOAD CSV
+-------------------------------------------*/
 Papa.parse(SHEETS[locationCode], {
   download: true,
   header: true,
@@ -132,21 +175,7 @@ Papa.parse(SHEETS[locationCode], {
 
     const sample = data[0];
     const colSerial = findColumn(sample, ["serial", "sn", "nomor", "no"]);
-
-    let colDesc = null;
-    for (let key in sample) {
-      if (key && key.trim().toLowerCase() === "asset description") {
-        colDesc = key; break;
-      }
-    }
-    if (!colDesc) {
-      colDesc = findColumn(sample, [
-        "asset description",
-        "asset desc",
-        "description",
-        "deskripsi"
-      ]);
-    }
+    let colDesc = findColumn(sample, ["asset description", "asset desc", "description", "deskripsi"]);
 
     if (!colSerial) {
       tbody.innerHTML =
@@ -159,7 +188,7 @@ Papa.parse(SHEETS[locationCode], {
 
     data.forEach((row, i) => {
       const serial = row[colSerial];
-      if (!serial || serial.trim() === "") return; // skip empty
+      if (!serial || serial.trim() === "") return;
 
       totalAlat++;
 
@@ -169,19 +198,19 @@ Papa.parse(SHEETS[locationCode], {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${no++}</td>
-
         <td>
           <a href="detail.html?sn=${encodeURIComponent(serial)}&loc=${encodeURIComponent(locationCode)}">
             ${serial}
           </a>
         </td>
-
         <td>${deskripsi}</td>
-
         <td><div id="${qrId}" class="qr-mini"></div></td>
       `;
       tbody.appendChild(tr);
 
+      /* ------------------------------------------
+         QR CODE SELALU BENAR → ADA SLASH!
+      -------------------------------------------*/
       new QRCode(document.getElementById(qrId), {
         text: BASE_PATH + "detail.html?sn=" + serial + "&loc=" + locationCode,
         width: 70,
@@ -189,7 +218,8 @@ Papa.parse(SHEETS[locationCode], {
       });
     });
 
-    document.getElementById("totalAlat").textContent = "Total alat: " + totalAlat;
+    document.getElementById("totalAlat").textContent =
+      "Total alat: " + totalAlat;
 
   }
 });
