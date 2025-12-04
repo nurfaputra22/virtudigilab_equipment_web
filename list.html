@@ -17,7 +17,15 @@
     }
     h1 {
       text-align: center;
+      margin-bottom: 10px;
+    }
+    #totalAlat {
+      text-align: center;
+      font-weight: bold;
+      margin-top: -5px;
       margin-bottom: 25px;
+      font-size: 16px;
+      color: #111;
     }
 
     table {
@@ -57,6 +65,7 @@
 <body>
 
 <h1 id="locationTitle">Loading...</h1>
+<p id="totalAlat"></p> <!-- TOTAL ALAT -->
 
 <table>
   <thead>
@@ -124,12 +133,10 @@ Papa.parse(SHEETS[locationCode], {
     const sample = data[0];
     const colSerial = findColumn(sample, ["serial", "sn", "nomor", "no"]);
 
-    // ---- PERBAIKAN UTAMA ----
     let colDesc = null;
     for (let key in sample) {
       if (key && key.trim().toLowerCase() === "asset description") {
-        colDesc = key;
-        break;
+        colDesc = key; break;
       }
     }
     if (!colDesc) {
@@ -140,7 +147,6 @@ Papa.parse(SHEETS[locationCode], {
         "deskripsi"
       ]);
     }
-    // --------------------------
 
     if (!colSerial) {
       tbody.innerHTML =
@@ -149,16 +155,18 @@ Papa.parse(SHEETS[locationCode], {
     }
 
     let no = 1;
+    let totalAlat = 0;
 
     data.forEach((row, i) => {
       const serial = row[colSerial];
-      if (!serial || serial.trim() === "") return;
+      if (!serial || serial.trim() === "") return; // skip empty
+
+      totalAlat++;
 
       const deskripsi = row[colDesc] || "-";
       const qrId = "qr" + i;
 
       const tr = document.createElement("tr");
-
       tr.innerHTML = `
         <td>${no++}</td>
 
@@ -172,16 +180,17 @@ Papa.parse(SHEETS[locationCode], {
 
         <td><div id="${qrId}" class="qr-mini"></div></td>
       `;
-
       tbody.appendChild(tr);
 
-    new QRCode(document.getElementById(qrId), {
-      text: BASE_PATH + "detail.html?sn=" + serial + "&loc=" + locationCode,
-      width: 70,
-      height: 70
+      new QRCode(document.getElementById(qrId), {
+        text: BASE_PATH + "detail.html?sn=" + serial + "&loc=" + locationCode,
+        width: 70,
+        height: 70
+      });
     });
 
-    });
+    document.getElementById("totalAlat").textContent = "Total alat: " + totalAlat;
+
   }
 });
 </script>
