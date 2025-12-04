@@ -16,8 +16,8 @@ header {
   align-items: center;
   justify-content: center;
   gap: 15px;
-  background: #0078d7;
-  color: white;
+  background: #ffffff;    /* atau background: white; */
+  color: #000;            /* teks jadi hitam */
   padding: 18px 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
