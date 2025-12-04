@@ -89,7 +89,8 @@ const findSerialColumnFromHeaders = (headers) =>
 async function loadDetailPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const sn = String(urlParams.get("sn") || "").trim();
-  const loc = urlParams.get("loc");
+  // support both "loc" and "location"
+  const loc = urlParams.get("loc") || urlParams.get("location");
 
   if (!sn || !loc || !SHEETS[loc]) {
     const el = document.getElementById("detail-body");
@@ -108,7 +109,7 @@ async function loadDetailPage() {
   }
 
   const item = parsed.objects.find(
-    (r) => String(r[serialCol]).trim() === sn
+    (r) => String((r[serialCol] || "")).trim() === sn
   );
 
   if (!item) {
@@ -131,6 +132,7 @@ async function loadDetailPage() {
   if (qrEl) {
     qrEl.innerHTML = "";
     new QRCode(qrEl, {
+      // build full URL and encode params
       text: `${BASE_PATH}detail.html?sn=${encodeURIComponent(sn)}&loc=${encodeURIComponent(loc)}`,
       width: 150,
       height: 150
@@ -151,8 +153,8 @@ async function loadLogs(sn) {
   const logM = await loadCSVParsed(LOG_M_URL);
   const logC = await loadCSVParsed(LOG_C_URL);
 
-  const mCol = findSerialColumnFromHeaders(logM.headers);
-  const cCol = findSerialColumnFromHeaders(logC.headers);
+  const mCol = findSerialColumnFromHeaders(logM.headers || []);
+  const cCol = findSerialColumnFromHeaders(logC.headers || []);
 
   const tableM = document.getElementById("log-maintenance");
   const tableC = document.getElementById("log-calibration");
@@ -160,11 +162,11 @@ async function loadLogs(sn) {
   if (!tableM || !tableC) return;
 
   const mRows = mCol ? logM.objects.filter(
-    (r) => String(r[mCol]).trim() === snFix
+    (r) => String((r[mCol] || "")).trim() === snFix
   ) : [];
 
   const cRows = cCol ? logC.objects.filter(
-    (r) => String(r[cCol]).trim() === snFix
+    (r) => String((r[cCol] || "")).trim() === snFix
   ) : [];
 
   renderLog(tableM, logM.headers, mRows);
@@ -208,7 +210,8 @@ function renderLog(container, headers, rows) {
 
 async function loadListPage() {
   const params = new URLSearchParams(window.location.search);
-  const loc = params.get("loc");
+  // support both "loc" and "location"
+  const loc = params.get("loc") || params.get("location");
 
   const titleEl = document.getElementById("room-title");
   const tbody = document.getElementById("equipment-body");
@@ -222,7 +225,7 @@ async function loadListPage() {
   if (!tbody) return;
 
   const parsed = await loadCSVParsed(SHEETS[loc]);
-  const serialCol = findSerialColumnFromHeaders(parsed.headers);
+  const serialCol = findSerialColumnFromHeaders(parsed.headers || []);
   if (!serialCol) {
     tbody.innerHTML = `<tr><td colspan="5">Kolom Serial tidak ditemukan pada sheet</td></tr>`;
     return;
@@ -231,7 +234,7 @@ async function loadListPage() {
   // bersihkan tbody dulu
   tbody.innerHTML = "";
 
-  parsed.objects.forEach((row) => {
+  parsed.objects.forEach((row, idx) => {
     const serialValueRaw = row[serialCol];
     const serialValue = String(serialValueRaw || "").trim();
 
@@ -250,7 +253,7 @@ async function loadListPage() {
         <td>${escapeHtml(category)}</td>
 
         <td>
-          <div class="qr" data-serial="${escapeAttr(serialValue)}" data-loc="${escapeAttr(loc)}"></div>
+          <div class="qr" data-serial="${escapeAttr(serialValue)}" data-loc="${escapeAttr(loc)}" id="qr-list-${idx}"></div>
         </td>
 
         <td>
@@ -308,5 +311,3 @@ function escapeAttr(s) {
   if (s == null) return "";
   return String(s).replaceAll('"', "&quot;");
 }
-
-
