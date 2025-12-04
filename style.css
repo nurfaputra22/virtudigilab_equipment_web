@@ -14,17 +14,45 @@ body {
 header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 15px;
-  background: #ffffff;    /* atau background: white; */
-  color: #000;            /* teks jadi hitam */
+  justify-content: space-between;  /* tombol kiri – konten tengah */
+  background: #ffffff;
+  color: #000;
   padding: 18px 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Center container untuk logo + judul */
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
 }
 
 header .logo {
   height: 50px;
   width: auto;
+}
+
+/* Tombol kembali */
+.home-btn {
+  color: #000 !important;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.1em;
+}
+
+/* Jika layout header mengecil */
+@media (max-width: 768px) {
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .header-center {
+    justify-content: center;
+  }
 }
 
 h1 {
@@ -98,7 +126,7 @@ main {
 =========================== */
 
 .qr-box {
-  text-align: center;        /* QR & judul di tengah */
+  text-align: center;
   margin-top: 25px;
   padding-top: 22px;
   border-top: 2px solid #e2e8f0;
@@ -110,7 +138,7 @@ main {
 }
 
 #qrcode {
-  display: inline-block;     /* Agar bisa benar-benar center */
+  display: inline-block;
   margin-top: 10px;
 }
 
@@ -146,11 +174,13 @@ main {
   border-bottom: 1px solid #f1f5f9;
 }
 
+/* ===========================
+   LOCATION NAME (bold)
+=========================== */
 .location-name {
   font-weight: 700 !important;
   color: #000 !important;
 }
-
 
 /* ===========================
    FOOTER
@@ -167,8 +197,11 @@ footer {
    RESPONSIVE
 =========================== */
 @media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    text-align: center;
+  main {
+    padding: 20px;
+  }
+
+  .detail-table th {
+    width: 140px !important;
   }
 }
