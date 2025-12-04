@@ -65,6 +65,18 @@
       color: #111827;
     }
 
+    .subtitle {
+      margin-top: 6px;
+      color: #6b7280;
+      font-size: 15px;
+    }
+
+    .count {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #111827;
+    }
+
     footer {
       text-align: center;
       padding: 20px;
@@ -86,51 +98,112 @@
     <h1>Daftar Lokasi Laboratorium</h1>
   </header>
 
-<!-- GRID LOKASI -->
-<div class="grid">
-  
-  <div class="card" onclick="goToLocation('22A3')">
-    <h2>22A3</h2>
-    <p class="subtitle">National Research Center</p>
-    <p class="count" id="count-22A3">Total alat: ...</p>
+  <!-- GRID LOKASI -->
+  <div class="grid">
+    
+    <div class="card" onclick="goToLocation('22A3')">
+      <h2>22A3</h2>
+      <p class="subtitle">National Research Center</p>
+      <p class="count" id="count-22A3">Total alat: ...</p>
+    </div>
+
+    <div class="card" onclick="goToLocation('27A6')">
+      <h2>27A6</h2>
+      <p class="subtitle">Nusa Dua</p>
+      <p class="count" id="count-27A6">Total alat: ...</p>
+    </div>
+
+    <div class="card" onclick="goToLocation('26A2')">
+      <h2>26A2</h2>
+      <p class="subtitle">Kediri Bangsal</p>
+      <p class="count" id="count-26A2">Total alat: ...</p>
+    </div>
+
+    <div class="card" onclick="goToLocation('26A3')">
+      <h2>26A3</h2>
+      <p class="subtitle">Malang Blimbing</p>
+      <p class="count" id="count-26A3">Total alat: ...</p>
+    </div>
+
+    <div class="card" onclick="goToLocation('26A4')">
+      <h2>26A4</h2>
+      <p class="subtitle">Surabaya Rungkut</p>
+      <p class="count" id="count-26A4">Total alat: ...</p>
+    </div>
+
   </div>
-
-  <div class="card" onclick="goToLocation('27A6')">
-    <h2>27A6</h2>
-    <p class="subtitle">Nusa Dua</p>
-    <p class="count" id="count-27A6">Total alat: ...</p>
-  </div>
-
-  <div class="card" onclick="goToLocation('26A2')">
-    <h2>26A2</h2>
-    <p class="subtitle">Kediri Bangsal</p>
-    <p class="count" id="count-26A2">Total alat: ...</p>
-  </div>
-
-  <div class="card" onclick="goToLocation('26A3')">
-    <h2>26A3</h2>
-    <p class="subtitle">Malang Blimbing</p>
-    <p class="count" id="count-26A3">Total alat: ...</p>
-  </div>
-
-  <div class="card" onclick="goToLocation('26A4')">
-    <h2>26A4</h2>
-    <p class="subtitle">Surabaya Rungkut</p>
-    <p class="count" id="count-26A4">Total alat: ...</p>
-  </div>
-
-</div>
-
 
   <!-- FOOTER -->
   <footer>
     © 2025 Virtu DigiLab — Sistem Inventori Alat Laboratorium
   </footer>
 
+  <!-- LIBRARY PARSER -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- SCRIPT TOTAL ALAT & NAVIGASI -->
   <script>
     function goToLocation(location) {
       window.location.href = "list.html?location=" + location;
     }
+
+    /* ------------------------------------------
+       LINK GOOGLE SHEETS (SAMA DENGAN list.html)
+    -------------------------------------------*/
+    const SHEETS = {
+      "22A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=0&single=true&output=csv",
+      "27A6": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=143986787&single=true&output=csv",
+      "26A2": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=1700186137&single=true&output=csv",
+      "26A3": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=956477238&single=true&output=csv",
+      "26A4": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXfYx0A9EbttwdEODklcJe0pY3TGftGwwiqvqQswVczPXNPG3CS3Am7dYNXQVa_XSoJX3Pnd_B3AQI/pub?gid=756843741&single=true&output=csv"
+    };
+
+    /* ------------------------------------------
+       FUNGSI DETEKSI KOLOM SERIAL
+    -------------------------------------------*/
+    function findSerialColumn(row) {
+      for (let key in row) {
+        if (!key) continue;
+        const clean = key.trim().toLowerCase();
+        if (clean.includes("serial") || clean.includes("sn") || clean.includes("nomor"))
+          return key;
+      }
+      return null;
+    }
+
+    /* ------------------------------------------
+       HITUNG TOTAL ALAT PER LOKASI
+    -------------------------------------------*/
+    Object.keys(SHEETS).forEach(loc => {
+
+      Papa.parse(SHEETS[loc], {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+
+          const data = results.data;
+
+          if (data.length === 0) {
+            document.getElementById("count-" + loc).textContent = "Total alat: 0";
+            return;
+          }
+
+          const serialCol = findSerialColumn(data[0]);
+          let total = 0;
+
+          data.forEach(row => {
+            if (row[serialCol] && row[serialCol].trim() !== "") {
+              total++;
+            }
+          });
+
+          document.getElementById("count-" + loc).textContent =
+            "Total alat: " + total;
+        }
+      });
+
+    });
   </script>
 
 </body>
