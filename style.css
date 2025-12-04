@@ -147,9 +147,10 @@ main {
 }
 
 .location-name {
-  font-weight: 700;
-   color: #000;
+  font-weight: 700 !important;
+  color: #000 !important;
 }
+
 
 /* ===========================
    FOOTER
