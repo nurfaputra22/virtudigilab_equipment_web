@@ -146,6 +146,10 @@ main {
   border-bottom: 1px solid #f1f5f9;
 }
 
+.location-name {
+  font-weight: 700;
+}
+
 /* ===========================
    FOOTER
 =========================== */
