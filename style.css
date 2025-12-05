@@ -13,6 +13,7 @@ body {
 =========================== */
 header {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: space-between;  /* tombol kiri – konten tengah */
   background: #ffffff;
