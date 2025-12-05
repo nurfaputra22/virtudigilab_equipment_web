@@ -12,31 +12,38 @@ body {
    HEADER
 =========================== */
 header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;  /* tombol kiri – konten tengah */
+  position: relative;            /* untuk center title */
   background: #ffffff;
   color: #000;
   padding: 18px 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
 
-/* Center container untuk logo + judul */
-.header-center {
   display: flex;
   align-items: center;
+  justify-content: flex-start;   /* logo tetap kiri */
   gap: 12px;
-  flex: 1;
-  justify-content: center;
 }
 
-header .logo {
+/* Logo kiri */
+.logo {
   height: 50px;
   width: auto;
+  flex-shrink: 0;
 }
 
-/* Tombol kembali */
+/* Teks judul di tengah */
+.page-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.6em;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Tombol kembali (jika ada) */
 .home-btn {
   color: #000 !important;
   font-weight: 600;
@@ -44,22 +51,16 @@ header .logo {
   font-size: 1.1em;
 }
 
-/* Jika layout header mengecil */
+/* MOBILE HEADER */
 @media (max-width: 768px) {
-  header {
-    flex-direction: row;
-    justify-content: space-between;
+
+  .page-title {
+    font-size: 1.3em;
   }
 
-  .header-center {
-    justify-content: center;
+  .logo {
+    height: 42px;
   }
-}
-
-h1 {
-  font-size: 1.6em;
-  margin: 0;
-  text-align: center;
 }
 
 /* ===========================
@@ -126,7 +127,6 @@ main {
 /* ===========================
    QR CODE SECTION
 =========================== */
-
 .qr-box {
   text-align: center;
   margin-top: 25px;
@@ -177,7 +177,7 @@ main {
 }
 
 /* ===========================
-   LOCATION NAME (bold)
+   LOCATION NAME
 =========================== */
 .location-name {
   font-weight: 700 !important;
